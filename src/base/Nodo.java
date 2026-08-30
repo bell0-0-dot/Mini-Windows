@@ -4,11 +4,15 @@
  */
 package base;
 
+import java.io.Serializable;
+
 /**
  *
  * @author gabri
  */
-public class Nodo<T>{
+public class Nodo<T> implements Serializable{
+    
+    private static final long serialVersionUID = 1L;
     
     private T dato;
     private Nodo<T> siguiente;

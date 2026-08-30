@@ -4,11 +4,15 @@
  */
 package base;
 
+import java.io.Serializable;
+
 /**
  *
  * @author gabri
  */
-public class ListaEnlazada<T> {
+public class ListaEnlazada<T> implements Serializable{
+    
+    private static final long serialVersionUID = 1L;
     
     private Nodo<T> cabeza;
     private int length;
