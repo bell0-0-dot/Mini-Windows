@@ -2,6 +2,7 @@
 package Insta;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.HeadlessException;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -25,6 +26,8 @@ public class LoginJFrame extends JFrame{
 }
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.add(new VentanaLogin());
+        this.setMinimumSize(new Dimension(800, 550)); 
+        this.setPreferredSize(new Dimension(1000, 650));
         this.pack();
         this.setLocationRelativeTo(null);
     }

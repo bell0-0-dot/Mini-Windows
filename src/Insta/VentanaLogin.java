@@ -73,6 +73,7 @@ public class VentanaLogin extends JPanel{
     private void construirInterfaz(){
         this.setLayout(new GridLayout(1, 2, 20, 0));
         this.setOpaque(false);
+        
         JPanel panelIzquierdo = new JPanel(new GridBagLayout());
         panelIzquierdo.setOpaque(false);
 
@@ -142,7 +143,7 @@ public class VentanaLogin extends JPanel{
         GridBagConstraints gbcTarjeta = new GridBagConstraints();
         gbcTarjeta.gridx = 0;
         gbcTarjeta.fill = GridBagConstraints.HORIZONTAL;
-
+        gbcTarjeta.weightx = 1.0;
        
         JLabel labelTitulo = new JLabel("Iniciar sesión en Instagram", SwingConstants.CENTER);
         labelTitulo.setFont(new Font("SansSerif", Font.BOLD, 18));
