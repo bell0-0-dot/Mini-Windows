@@ -22,6 +22,10 @@ public class ListaEnlazada<T> implements Serializable{
         length = 0;
     }
     
+    public Nodo<T> getCabeza(){
+        return cabeza;
+    }
+    
     public void insertarInicio(T dato){
         Nodo<T> nuevo = new Nodo<>(dato);
         nuevo.setSiguiente(cabeza);

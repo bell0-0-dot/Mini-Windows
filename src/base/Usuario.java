@@ -11,13 +11,14 @@ public  class Usuario implements Serializable{
     protected String password;
     protected boolean activo;
     protected LocalDate fechaRegistro;
+    protected boolean esAdmin;
 
     public Usuario(String User, String password) {
         this.User = User;
         this.password = password.trim();
         this.activo=true;
         this.fechaRegistro=LocalDate.now();
-        
+        this.esAdmin = false;
     }
     public boolean verificarPassword(String intento){
         if(intento==null){
@@ -64,5 +65,24 @@ public  class Usuario implements Serializable{
         this.password = password;
     }
     
+    public boolean getEsAdmin(){
+        return esAdmin;
+    }
+    
+    public void setAdmin(boolean estadoAdmin){
+        this.esAdmin = estadoAdmin; 
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof Usuario)) return false;
+        return this.User.equalsIgnoreCase(((Usuario) obj).User);
+    }
+
+    @Override
+    public int hashCode() {
+        return User.toLowerCase().hashCode();
+    }
     
 }

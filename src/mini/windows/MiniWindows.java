@@ -4,7 +4,7 @@
  */
 package mini.windows;
 
-import ConfigInsta.Rutas;
+import javax.swing.*;
 
 /**
  *
@@ -16,9 +16,20 @@ public class MiniWindows {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        // TODO code application logic here
         
-        System.out.println(Rutas.RUTA_RAIZ);
-                
-    }
-    
+        
+        //System.out.println(Rutas.RUTA_RAIZ);
+        
+        try {
+            GestorArchivos.inicializarSistema();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null,
+                    "Error al inicializar el sistema: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+ 
+        SwingUtilities.invokeLater(() -> new LoginFrame().setVisible(true));
+    }    
 }
