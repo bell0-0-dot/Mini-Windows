@@ -121,7 +121,7 @@ public class VentanaLogin extends JPanel{
             SesionActual.getInstancia().iniciarSesion(usuario);
             labelError.setText(" ");
             System.out.println("Login exitoso: " + username);
-            // Aquí, con CardLayout, cambiarías al PanelTimeline
+            
             System.out.println("Logeado");
         } catch (UsuarioInexistenteException ex) {
             labelError.setText("El usuario no existe.");

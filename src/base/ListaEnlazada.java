@@ -95,5 +95,9 @@ public class ListaEnlazada<T> implements Serializable{
     public boolean estaVacia() {
         return length == 0;
     }
+
+    public Nodo<T> getCabeza() {
+        return cabeza;
+    }
     
 }
