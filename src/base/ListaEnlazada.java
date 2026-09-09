@@ -100,8 +100,6 @@ public class ListaEnlazada<T> implements Serializable{
         return length == 0;
     }
 
-    public Nodo<T> getCabeza() {
-        return cabeza;
-    }
+
     
 }
