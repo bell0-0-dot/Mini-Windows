@@ -16,6 +16,7 @@ public class ServicioArchivoInsta {
     public static ListaEnlazada<UsuarioInsta> cargarLista() throws ArchivoCorruptoException{
         return ArchivoUtil.leerLista(Rutas.ARCHIVO_USERS);
     }
+    
     public static UsuarioInsta buscarUsuario(String username) throws ArchivoCorruptoException{
         ListaEnlazada usuarios=cargarLista();
         if(usuarios==null){
@@ -33,5 +34,17 @@ public class ServicioArchivoInsta {
        
         return actual.getDato();
     }
+    public static boolean validarLogin(String username, String password) throws ArchivoCorruptoException {
+        UsuarioInsta encontrado= buscarUsuario(username);
+        if(encontrado!=null){
+             if(encontrado.verificarPassword(password)){
+                 if(encontrado.isActivo()){
+                     return true;
+                 }
+            }
+        }
+        return false;
+    }
+    
     
 }
