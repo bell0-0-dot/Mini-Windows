@@ -1,148 +1,249 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package mini.windows;
 
 import Excepciones.ArchivoCorruptoException;
 import base.ListaEnlazada;
 import base.Usuario;
 import editordetexto.GUIEditorTexto;
- 
+import consola.*;
+import reproductorMusica.reproductorPanel;
+
 import javax.swing.*;
+import javax.swing.event.InternalFrameAdapter;
+import javax.swing.event.InternalFrameEvent;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  *
  * @author gabri
  */
-public class VentanaPrincipal extends JFrame{
-    private JPanel panelCentral;
-    private CardLayout distribuidorTarjetas;
+public class VentanaPrincipal extends JFrame {
 
-    private JPanel panelExplorador;
-    private JPanel panelEditor;
- 
+    private JDesktopPane escritorio;
+
+    private JPanel panelBarraTareas;
+
+    private final Map<String, JInternalFrame> ventanasAbiertas = new LinkedHashMap<>();
+
+    private final Map<JInternalFrame, JButton> botonesTareas = new LinkedHashMap<>();
+
     public VentanaPrincipal() {
         super("Mini-Windows");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(800, 550);
         setLocationRelativeTo(null);
         setUndecorated(true);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
- 
-        distribuidorTarjetas = new CardLayout();
-        panelCentral = new JPanel(distribuidorTarjetas);
-        add(panelCentral, BorderLayout.CENTER);
 
-        panelCentral.add(construirPanelBienvenida(), "bienvenida");
- 
-        add(construirBarraMenu(),BorderLayout.SOUTH);
-        mostrarBienvenida();
+        escritorio = new JDesktopPane();
+        escritorio.setBackground(new Color(0, 90, 140));
+        escritorio.setDesktopManager(new GestorEscritorioSinIconos());
+        add(escritorio, BorderLayout.CENTER);
+
+        add(construirBarraInferior(), BorderLayout.SOUTH);
     }
- 
+
+    private JPanel construirBarraInferior() {
+        JPanel barraInferior = new JPanel(new BorderLayout());
+
+        barraInferior.add(construirBarraMenu(), BorderLayout.WEST);
+
+        panelBarraTareas = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 2));
+        JScrollPane scrollTareas = new JScrollPane(panelBarraTareas,
+                JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollTareas.setBorder(null);
+        scrollTareas.setPreferredSize(new Dimension(10, 40));
+        barraInferior.add(scrollTareas, BorderLayout.CENTER);
+        JButton botonEscritorio = new JButton("Mostrar escritorio");
+        botonEscritorio.addActionListener(e -> mostrarEscritorio());
+        barraInferior.add(botonEscritorio, BorderLayout.EAST);
+        return barraInferior;
+    }
+
     private JMenuBar construirBarraMenu() {
         JMenuBar barra = new JMenuBar();
         Usuario actual = SesionActual.getUsuarioActual();
- 
+
         JMenu menuHerramientas = new JMenu("Herramientas");
-        agregarItem(menuHerramientas, "Explorador de archivos", e -> abrirExplorador(actual.getUser()));
+        agregarItem(menuHerramientas, "Explorador de archivos", e -> abrirExplorador(actual));
         agregarItem(menuHerramientas, "Editor de texto", e -> abrirEditorTexto(actual.getUser()));
         agregarItem(menuHerramientas, "Visor de imágenes", e -> abrirVisorImagenes(actual.getUser()));
-        agregarItem(menuHerramientas, "Consola de comandos", e -> mostrarProximamente("Consola de comandos"));
-        agregarItem(menuHerramientas, "Reproductor de música", e -> mostrarProximamente("Reproductor de música"));
+        agregarItem(menuHerramientas, "Consola de comandos", e -> abrirConsola(actual.getUser()));
+        agregarItem(menuHerramientas, "Reproductor de música", e -> abrirReproductorMusica(actual.getUser()));
         barra.add(menuHerramientas);
- 
+
         if (actual.getEsAdmin()) {
             JMenu menuAdmin = new JMenu("Administración");
             agregarItem(menuAdmin, "Crear usuario", e -> crearUsuarioDesdeAdmin());
             agregarItem(menuAdmin, "Ver carpeta de otro usuario", e -> verCarpetaDeOtroUsuario());
             barra.add(menuAdmin);
         }
- 
+
         JMenu menuSesion = new JMenu("Sesión");
         agregarItem(menuSesion, "Usuario actual: " + actual.getUser(), null).setEnabled(false);
         agregarItem(menuSesion, "Cerrar sesión", e -> cerrarSesion());
         barra.add(menuSesion);
-        
-        barra.add(Box.createHorizontalGlue());
-        
-        JButton inicio = new JButton("Inicio");
-        inicio.addActionListener(e -> mostrarBienvenida());
-        barra.add(inicio);
-        
+
         return barra;
     }
- 
+
     private JMenuItem agregarItem(JMenu menu, String texto, java.awt.event.ActionListener accion) {
         JMenuItem item = new JMenuItem(texto);
         if (accion != null) item.addActionListener(accion);
         menu.add(item);
         return item;
     }
- 
-    private final java.util.Map<String, JPanel> panelesAbiertos = new java.util.HashMap<>();
 
-    private JPanel construirPanelBienvenida() {
-        Usuario actual = SesionActual.getUsuarioActual();
-        JLabel label = new JLabel(
-                "Bienvenido, " + actual.getUser() + " (" +
-                (actual.getEsAdmin() ? "administrador" : "usuario estándar") + ")",
-                SwingConstants.CENTER);
-        label.setFont(label.getFont().deriveFont(16f));
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(label, BorderLayout.CENTER);
-        return panel;
-    }
+    private void mostrarOCrearVentana(String clave, String titulo, Icon icono,
+                                       java.util.function.Supplier<JPanel> creadorContenido,
+                                       int ancho, int alto) {
+        JInternalFrame frame = ventanasAbiertas.get(clave);
 
-    private void mostrarBienvenida() {
-        distribuidorTarjetas.show(panelCentral, "bienvenida");
-    }
+        if (frame == null) {
+            frame = new JInternalFrame(titulo, true, true, true, true);
+            if (icono != null) frame.setFrameIcon(icono);
+            frame.setSize(ancho, alto);
+            frame.setLocation(30 + (ventanasAbiertas.size() % 8) * 25,
+                    30 + (ventanasAbiertas.size() % 8) * 25);
 
-    private void mostrarOCrearPanel(String clave, java.util.function.Supplier<JPanel> creador) {
-        JPanel panel = panelesAbiertos.get(clave);
-        if (panel == null) {
-            panel = creador.get();
-            panelesAbiertos.put(clave, panel);
-            panelCentral.add(panel, clave);
+            JPanel contenido = creadorContenido.get();
+            frame.setContentPane(contenido);
+
+            final JInternalFrame frameFinal = frame;
+            frame.addInternalFrameListener(new InternalFrameAdapter() {
+                @Override
+                public void internalFrameClosing(InternalFrameEvent e) {
+                    cerrarVentana(clave, frameFinal);
+                }
+            });
+            frame.addPropertyChangeListener(JInternalFrame.IS_ICON_PROPERTY,
+                    (PropertyChangeListener) this::onCambioIcono);
+
+            ventanasAbiertas.put(clave, frame);
+            escritorio.add(frame);
+            agregarBotonTarea(frame, titulo);
         }
-        distribuidorTarjetas.show(panelCentral, clave);
+
+        try {
+            if (frame.isIcon()) frame.setIcon(false);
+            frame.setVisible(true);
+            escritorio.getDesktopManager().deiconifyFrame(frame);
+            frame.moveToFront();
+            frame.setSelected(true);
+        } catch (java.beans.PropertyVetoException ignorado) {
+        }
     }
 
-    private void abrirExplorador(String username) {
-        String ruta = GestorArchivos.rutaCarpetaUsuario(username);
-        mostrarOCrearPanel("explorador:" + username, () -> new ExploradorPanel(ruta));
+    private void onCambioIcono(PropertyChangeEvent evt) {
+        JInternalFrame frame = (JInternalFrame) evt.getSource();
+        JButton boton = botonesTareas.get(frame);
+        if (boton != null) {
+            boton.setFont(boton.getFont().deriveFont(
+                    frame.isIcon() ? Font.ITALIC : Font.PLAIN));
+        }
+    }
+
+    private void agregarBotonTarea(JInternalFrame frame, String titulo) {
+        JButton boton = new JButton(titulo);
+        boton.addActionListener(e -> alternarVentana(frame));
+        botonesTareas.put(frame, boton);
+        panelBarraTareas.add(boton);
+        panelBarraTareas.revalidate();
+        panelBarraTareas.repaint();
+    }
+
+    private void alternarVentana(JInternalFrame frame) {
+        try {
+            if (frame.isIcon()) {
+                frame.setIcon(false);
+                frame.setSelected(true);
+                frame.moveToFront();
+            } else if (frame.isSelected()) {
+                frame.setIcon(true);
+            } else {
+                frame.setSelected(true);
+                frame.moveToFront();
+            }
+        } catch (java.beans.PropertyVetoException ignorado) {
+        }
+    }
+
+    private void cerrarVentana(String clave, JInternalFrame frame) {
+        if (frame.getContentPane() instanceof reproductorPanel) {
+            ((reproductorPanel) frame.getContentPane()).detener();
+        }
+
+        ventanasAbiertas.remove(clave);
+        JButton boton = botonesTareas.remove(frame);
+        if (boton != null) {
+            panelBarraTareas.remove(boton);
+            panelBarraTareas.revalidate();
+            panelBarraTareas.repaint();
+        }
+        frame.dispose();
+    }
+
+    private void mostrarEscritorio() {
+        for (JInternalFrame frame : ventanasAbiertas.values()) {
+            try {
+                if (!frame.isIcon()) frame.setIcon(true);
+            } catch (java.beans.PropertyVetoException ignorado) {
+            }
+        }
+    }
+
+    private void abrirExplorador(Usuario usuario) {
+        String username = usuario.getUser();
+        String ruta = usuario.getEsAdmin() ? GestorArchivos.RAIZ : GestorArchivos.rutaCarpetaUsuario(username);
+        mostrarOCrearVentana("explorador:" + username, "Explorador de archivos — " + username, null,
+                () -> new ExploradorPanel(ruta), 650, 420);
     }
 
     private void abrirEditorTexto(String username) {
         String rutaUsuario = GestorArchivos.rutaCarpetaUsuario(username);
-        mostrarOCrearPanel("editor:" + username, () -> new GUIEditorTexto(rutaUsuario));
+        mostrarOCrearVentana("editor:" + username, "Editor de texto — " + username, null,
+                () -> new GUIEditorTexto(rutaUsuario), 650, 450);
     }
 
     private void abrirVisorImagenes(String username) {
         String rutaUsuario = GestorArchivos.rutaCarpetaUsuario(username);
-        mostrarOCrearPanel("visor:" + username, () -> new VisorImagenesPanel(rutaUsuario));
+        mostrarOCrearVentana("visor:" + username, "Visor de imágenes — " + username, null,
+                () -> new VisorImagenesPanel(rutaUsuario), 600, 450);
     }
- 
+
+    private void abrirConsola(String username) {
+        String rutaUsuario = GestorArchivos.rutaCarpetaUsuario(username);
+        mostrarOCrearVentana("consola:" + username, "Consola — " + username, null,
+                () -> new ConsolaPanel(rutaUsuario), 600, 380);
+    }
+
+    private void abrirReproductorMusica(String username) {
+        String rutaUsuario = GestorArchivos.rutaCarpetaUsuario(username);
+        mostrarOCrearVentana("reproductor:" + username, "Reproductor de Música — " + username, null,
+                () -> new reproductorPanel(rutaUsuario), 800, 500);
+    }
+
     private void mostrarProximamente(String nombreHerramienta) {
-        mostrarOCrearPanel("proximamente:" + nombreHerramienta, () -> {
+        mostrarOCrearVentana("proximamente:" + nombreHerramienta, nombreHerramienta, null, () -> {
             JLabel label = new JLabel(nombreHerramienta + " — próximamente", SwingConstants.CENTER);
             JPanel panel = new JPanel(new BorderLayout());
             panel.add(label, BorderLayout.CENTER);
             return panel;
-        });
+        }, 400, 200);
     }
- 
+
     private void crearUsuarioDesdeAdmin() {
         String username = JOptionPane.showInputDialog(this, "Nuevo username:");
         if (username == null || username.trim().isEmpty()) return;
- 
+
         String password = JOptionPane.showInputDialog(this, "Contraseña:");
         if (password == null || password.trim().isEmpty()) return;
- 
+
         int esAdmin = JOptionPane.showConfirmDialog(this, "¿Será administrador?",
                 "Tipo de usuario", JOptionPane.YES_NO_OPTION);
- 
+
         try {
             GestorArchivos.crearUsuario(username.trim(), password, esAdmin == JOptionPane.YES_OPTION);
             JOptionPane.showMessageDialog(this, "Usuario creado correctamente.");
@@ -151,31 +252,61 @@ public class VentanaPrincipal extends JFrame{
                     "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
- 
+
     private void verCarpetaDeOtroUsuario() {
         try {
-            ListaEnlazada<Usuario> usuarios = base.ArchivoUtil.leerLista(GestorArchivos.RUTA_USUARIOS);
+            ListaEnlazada<Usuario> usuarios = base.ArchivoUtil.leerLista(GestorArchivos.RUTA_USUARIOS);            
             String[] nombres = new String[usuarios.length()];
             for (int i = 0; i < usuarios.length(); i++) {
                 nombres[i] = usuarios.obtenerEn(i).getUser();
             }
- 
+
             String elegido = (String) JOptionPane.showInputDialog(this,
                     "Selecciona un usuario:", "Ver carpeta",
                     JOptionPane.PLAIN_MESSAGE, null, nombres, nombres.length > 0 ? nombres[0] : null);
- 
             if (elegido != null) {
-                abrirExplorador(elegido);
+                Usuario elegidoObj = usuarios.getCabeza().getDato();
+                for (int i = 0; i < usuarios.length(); i++) {
+                    if(usuarios.obtenerEn(i).getUser().equalsIgnoreCase(elegido)){
+                        elegidoObj = usuarios.obtenerEn(i);
+                    }
+                }
+                abrirExplorador(elegidoObj);
             }
         } catch (ArchivoCorruptoException ex) {
             JOptionPane.showMessageDialog(this, "No se pudo leer la lista de usuarios.",
                     "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
- 
+
     private void cerrarSesion() {
+        java.util.List<Map.Entry<String, JInternalFrame>> listaVentanas = 
+                new java.util.ArrayList<>(ventanasAbiertas.entrySet());
+
+        for (Map.Entry<String, JInternalFrame> entry : listaVentanas) {
+            cerrarVentana(entry.getKey(), entry.getValue());
+        }
+
         SesionActual.cerrarSesion();
         new LoginFrame().setVisible(true);
         dispose();
+    }
+
+    private static class GestorEscritorioSinIconos extends DefaultDesktopManager {
+        @Override
+        public void iconifyFrame(JInternalFrame f) {
+            if (f.isSelected()) {
+                try {
+                    f.setSelected(false);
+                } catch (java.beans.PropertyVetoException ignorado) {
+                }
+            }
+            f.setVisible(false);
+        }
+
+        @Override
+        public void deiconifyFrame(JInternalFrame f) {
+            f.setVisible(true);
+        }
     }
 }
