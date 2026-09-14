@@ -1,11 +1,13 @@
 package reproductorMusica;
 
+import base.FileChooserUtil;
 import base.ListaEnlazada;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.IOException;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 
@@ -21,6 +23,8 @@ public class reproductorPanel extends JPanel {
     private int segundoActual = 0;
 
     private JList<Cancion> listaCanciones;
+    private DefaultListModel<Cancion> modeloCanciones;
+    private JLabel labelCarpetaActual;
     private JLabel imagenCancion;
     private JLabel labelTituloCancion;
     private JLabel labelArtistaCancion;
@@ -41,6 +45,7 @@ public class reproductorPanel extends JPanel {
 
         reproductor.setAlTerminarCancion(() -> siguienteCancion());
 
+        add(construirBarraHerramientas(), BorderLayout.NORTH);
         add(construirPanelListaMusica(), BorderLayout.CENTER);
         add(construirPanelCancionActual(), BorderLayout.EAST);
 
@@ -54,9 +59,78 @@ public class reproductorPanel extends JPanel {
         });
     }
 
+    private JToolBar construirBarraHerramientas() {
+        JToolBar barra = new JToolBar();
+        barra.setFloatable(false);
+
+        JButton botonElegirCarpeta = new JButton("Elegir carpeta...");
+        botonElegirCarpeta.addActionListener(e -> elegirCarpeta());
+        barra.add(botonElegirCarpeta);
+
+        barra.addSeparator();
+
+        labelCarpetaActual = new JLabel();
+        labelCarpetaActual.setFont(labelCarpetaActual.getFont().deriveFont(Font.ITALIC));
+        barra.add(labelCarpetaActual);
+
+        return barra;
+    }
+
+    private void elegirCarpeta() {
+        JFileChooser selector = FileChooserUtil.crearRestringido(carpetaRaizUsuario);
+        selector.setDialogTitle("Selecciona la carpeta con canciones");
+        selector.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        if (carpetaActual != null) {
+            selector.setCurrentDirectory(carpetaActual);
+        }
+
+        int opcion = selector.showOpenDialog(this);
+        if (opcion != JFileChooser.APPROVE_OPTION) return;
+
+        cambiarCarpetaMusica(selector.getSelectedFile());
+    }
+
+    private void cambiarCarpetaMusica(File carpeta) {
+        cargarCarpeta(carpeta);
+        recargarModeloDesdeCarpetaActual();
+        actualizarLabelCarpeta();
+
+        if (modeloCanciones.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "No se encontraron archivos .mp3 en esa carpeta.",
+                    "Sin canciones", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    private void recargarModeloDesdeCarpetaActual() {
+        modeloCanciones.clear();
+        for (int i = 0; i < musicaCarpetaActual.length(); i++) {
+            modeloCanciones.addElement(new Cancion(musicaCarpetaActual.obtenerEn(i)));
+        }
+    }
+
+    private void actualizarLabelCarpeta() {
+        if (labelCarpetaActual == null || carpetaActual == null) return;
+        labelCarpetaActual.setText("Carpeta: " + rutaRelativaLegible(carpetaActual));
+    }
+
+    private String rutaRelativaLegible(File carpeta) {
+        try {
+            String base = carpetaRaizUsuario.getCanonicalPath();
+            String actual = carpeta.getCanonicalPath();
+            if (actual.startsWith(base)) {
+                String relativa = actual.substring(base.length());
+                relativa = relativa.replace(File.separatorChar, '/');
+                return relativa.isEmpty() ? "/" : relativa;
+            }
+        } catch (IOException ignorado) {
+        }
+        return carpeta.getName();
+    }
+
     private JPanel construirPanelListaMusica() {
-        DefaultListModel<Cancion> modelo = new DefaultListModel<>();
-        listaCanciones = new JList<>(modelo);
+        modeloCanciones = new DefaultListModel<>();
+        listaCanciones = new JList<>(modeloCanciones);
 
         listaCanciones.setCellRenderer(new elementoCancionRender());
         listaCanciones.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -70,9 +144,8 @@ public class reproductorPanel extends JPanel {
             cargarCarpeta(carpetaMusica);
         }
 
-        for (int i = 0; i < musicaCarpetaActual.length(); i++) {
-            modelo.addElement(new Cancion(musicaCarpetaActual.obtenerEn(i)));
-        }
+        recargarModeloDesdeCarpetaActual();
+        actualizarLabelCarpeta();
 
         listaCanciones.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
@@ -162,6 +235,24 @@ public class reproductorPanel extends JPanel {
         return panelCancionActual;
     }
 
+    public void abrirArchivoExterno(File archivoMp3) {
+        if (archivoMp3 == null || !archivoMp3.exists() || !esCancion(archivoMp3)) {
+            return;
+        }
+
+        File carpetaCancion = archivoMp3.getParentFile();
+        cargarCarpeta(carpetaCancion);
+        recargarModeloDesdeCarpetaActual();
+        actualizarLabelCarpeta();
+
+        for (int i = 0; i < modeloCanciones.getSize(); i++) {
+            if (modeloCanciones.getElementAt(i).getRuta().equals(archivoMp3)) {
+                listaCanciones.setSelectedIndex(i);
+                return;
+            }
+        }
+    }
+
     private void reproducirSeleccionada(Cancion cancion) {
         this.cancionActual = cancion;
         labelTituloCancion.setText(cancion.getTitulo());
@@ -212,7 +303,7 @@ public class reproductorPanel extends JPanel {
         if (index > 0) {
             listaCanciones.setSelectedIndex(index - 1);
         } else {
-            listaCanciones.setSelectedIndex(total - 1);
+            listaCanciones.setSelectedIndex(total - 1); 
         }
     }
 

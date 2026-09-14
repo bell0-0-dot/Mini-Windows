@@ -11,6 +11,7 @@ import javax.swing.*;
 import javax.swing.event.InternalFrameAdapter;
 import javax.swing.event.InternalFrameEvent;
 import java.awt.*;
+import java.io.File;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.LinkedHashMap;
@@ -198,19 +199,70 @@ public class VentanaPrincipal extends JFrame {
         String username = usuario.getUser();
         String ruta = usuario.getEsAdmin() ? GestorArchivos.RAIZ : GestorArchivos.rutaCarpetaUsuario(username);
         mostrarOCrearVentana("explorador:" + username, "Explorador de archivos — " + username, null,
-                () -> new ExploradorPanel(ruta), 650, 420);
+                () -> {
+                    ExploradorPanel panel = new ExploradorPanel(ruta);
+                    panel.setOyenteApertura(archivo -> manejarAperturaDeArchivo(archivo, username));
+                    return panel;
+                }, 650, 420);
+    }
+
+    private void manejarAperturaDeArchivo(File archivo, String username) {
+        String nombre = archivo.getName().toLowerCase();
+
+        if (nombre.endsWith(persistencia.Constantes.EXTENSION)
+                || nombre.endsWith(persistencia.Constantes.EXTENSION_LEGADO)) {
+            abrirEditorTexto(username, archivo);
+        } else if (esImagen(nombre)) {
+            abrirVisorImagenes(username, archivo);
+        } else if (nombre.endsWith(".mp3")) {
+            abrirReproductorMusica(username, archivo);
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "No hay una herramienta asociada a este tipo de archivo (" + nombre + ").",
+                    "Tipo de archivo no soportado", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    private boolean esImagen(String nombreEnMinusculas) {
+        return nombreEnMinusculas.endsWith(".jpg") || nombreEnMinusculas.endsWith(".jpeg")
+                || nombreEnMinusculas.endsWith(".png") || nombreEnMinusculas.endsWith(".gif")
+                || nombreEnMinusculas.endsWith(".bmp");
     }
 
     private void abrirEditorTexto(String username) {
+        abrirEditorTexto(username, null);
+    }
+
+    private void abrirEditorTexto(String username, File archivoAAbrir) {
         String rutaUsuario = GestorArchivos.rutaCarpetaUsuario(username);
-        mostrarOCrearVentana("editor:" + username, "Editor de texto — " + username, null,
+        String clave = "editor:" + username;
+        mostrarOCrearVentana(clave, "Editor de texto — " + username, null,
                 () -> new GUIEditorTexto(rutaUsuario), 650, 450);
+
+        if (archivoAAbrir != null) {
+            JInternalFrame frame = ventanasAbiertas.get(clave);
+            if (frame != null && frame.getContentPane() instanceof GUIEditorTexto) {
+                ((GUIEditorTexto) frame.getContentPane()).abrirArchivoExterno(archivoAAbrir);
+            }
+        }
     }
 
     private void abrirVisorImagenes(String username) {
+        abrirVisorImagenes(username, null);
+    }
+
+    private void abrirVisorImagenes(String username, File archivoAAbrir) {
         String rutaUsuario = GestorArchivos.rutaCarpetaUsuario(username);
-        mostrarOCrearVentana("visor:" + username, "Visor de imágenes — " + username, null,
+        String clave = "visor:" + username;
+        mostrarOCrearVentana(clave, "Visor de imágenes — " + username, null,
                 () -> new VisorImagenesPanel(rutaUsuario), 600, 450);
+
+        if (archivoAAbrir != null) {
+            JInternalFrame frame = ventanasAbiertas.get(clave);
+            if (frame != null && frame.getContentPane() instanceof VisorImagenesPanel) {
+                ((VisorImagenesPanel) frame.getContentPane()).abrirArchivoExterno(archivoAAbrir);
+            }
+        }
     }
 
     private void abrirConsola(String username) {
@@ -220,9 +272,21 @@ public class VentanaPrincipal extends JFrame {
     }
 
     private void abrirReproductorMusica(String username) {
+        abrirReproductorMusica(username, null);
+    }
+
+    private void abrirReproductorMusica(String username, File archivoAAbrir) {
         String rutaUsuario = GestorArchivos.rutaCarpetaUsuario(username);
-        mostrarOCrearVentana("reproductor:" + username, "Reproductor de Música — " + username, null,
+        String clave = "reproductor:" + username;
+        mostrarOCrearVentana(clave, "Reproductor de Música — " + username, null,
                 () -> new reproductorPanel(rutaUsuario), 800, 500);
+
+        if (archivoAAbrir != null) {
+            JInternalFrame frame = ventanasAbiertas.get(clave);
+            if (frame != null && frame.getContentPane() instanceof reproductorPanel) {
+                ((reproductorPanel) frame.getContentPane()).abrirArchivoExterno(archivoAAbrir);
+            }
+        }
     }
 
     private void mostrarProximamente(String nombreHerramienta) {

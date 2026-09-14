@@ -16,6 +16,27 @@ import java.util.List;
 
 public class ExploradorPanel extends JPanel {
 
+    public interface OyenteApertura {
+        void alAbrirArchivo(File archivo);
+    }
+
+    private OyenteApertura oyenteApertura;
+
+    public void setOyenteApertura(OyenteApertura oyente) {
+        this.oyenteApertura = oyente;
+    }
+
+    private void notificarApertura(File archivo) {
+        if (archivo == null || archivo.isDirectory()) return;
+        if (oyenteApertura != null) {
+            oyenteApertura.alAbrirArchivo(archivo);
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "No hay ninguna herramienta conectada para abrir archivos desde aquí.",
+                    "Abrir archivo", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
     private JTree arbol;
     private JList<File> lista;
     private DefaultListModel<File> modeloLista;
@@ -69,6 +90,18 @@ public class ExploradorPanel extends JPanel {
                 refrescarLista();
             }
         });
+
+        arbol.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    File seleccionado = archivoDelNodoSeleccionado();
+                    if (seleccionado != null && !seleccionado.isDirectory()) {
+                        notificarApertura(seleccionado);
+                    }
+                }
+            }
+        });
     }
 
     private DefaultMutableTreeNode construirNodo(File carpetaOArchivo) {
@@ -119,10 +152,14 @@ public class ExploradorPanel extends JPanel {
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
                     File seleccionado = lista.getSelectedValue();
-                    if (seleccionado != null && seleccionado.isDirectory()) {
+                    if (seleccionado == null) return;
+
+                    if (seleccionado.isDirectory()) {
                         carpetaMostrada = seleccionado;
                         elementoSeleccionado = null;
                         refrescarLista();
+                    } else {
+                        notificarApertura(seleccionado);
                     }
                 }
             }
@@ -172,6 +209,11 @@ public class ExploradorPanel extends JPanel {
         JToolBar barra = new JToolBar();
         barra.setFloatable(false);
 
+        JButton botonAbrir = new JButton("Abrir");
+        botonAbrir.addActionListener(e -> abrirSeleccionado());
+        barra.add(botonAbrir);
+        barra.addSeparator();
+
         botonOrganizar = new JButton("Organizar");
         botonOrganizar.addActionListener(e -> organizarCarpetaSeleccionada());
         barra.add(botonOrganizar);
@@ -214,6 +256,15 @@ public class ExploradorPanel extends JPanel {
         barra.add(botonEliminar);
 
         return barra;
+    }
+
+    private void abrirSeleccionado() {
+        File seleccionado = getArchivoSeleccionado();
+        if (seleccionado == null || seleccionado.isDirectory()) {
+            JOptionPane.showMessageDialog(this, "Selecciona un archivo (no una carpeta) para abrir.");
+            return;
+        }
+        notificarApertura(seleccionado);
     }
 
     private void organizarCarpetaSeleccionada() {

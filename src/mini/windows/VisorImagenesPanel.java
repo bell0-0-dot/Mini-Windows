@@ -86,6 +86,21 @@ public class VisorImagenesPanel extends JPanel {
         return panelInferior;
     }
 
+    public void abrirArchivoExterno(File archivoElegido) {
+        if (archivoElegido == null || !archivoElegido.exists() || !esImagen(archivoElegido)) {
+            return;
+        }
+
+        cargarCarpeta(archivoElegido.getParentFile());
+
+        for (int i = 0; i < imagenesCarpetaActual.length(); i++) {
+            if (imagenesCarpetaActual.obtenerEn(i).equals(archivoElegido)) {
+                mostrarIndice(i);
+                return;
+            }
+        }
+    }
+
     private void abrirImagen() {
         JFileChooser selector = FileChooserUtil.crearRestringido(carpetaRaizUsuario);
         selector.setCurrentDirectory(carpetaActual != null ? carpetaActual : carpetaRaizUsuario);
