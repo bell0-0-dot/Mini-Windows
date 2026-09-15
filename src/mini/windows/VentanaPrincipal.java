@@ -38,28 +38,94 @@ public class VentanaPrincipal extends JFrame {
         setUndecorated(true);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
 
-        escritorio = new JDesktopPane();
+        Image wallpaperEscritorio = RecursosUI.cargarImagen("WallpaperDesktop.jpg");
+        escritorio = new JDesktopPane() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (wallpaperEscritorio != null) {
+                    g.drawImage(wallpaperEscritorio, 0, 0, getWidth(), getHeight(), this);
+                }
+            }
+        };
         escritorio.setBackground(new Color(0, 90, 140));
         escritorio.setDesktopManager(new GestorEscritorioSinIconos());
         add(escritorio, BorderLayout.CENTER);
 
+        agregarIconosEscritorio();
+
         add(construirBarraInferior(), BorderLayout.SOUTH);
     }
 
+    private void agregarIconosEscritorio() {
+        Usuario actual = SesionActual.getUsuarioActual();
+
+        Object[][] apps = {
+            {"Explorador", "IconoExploradorArchivos.png", (Runnable) () -> abrirExplorador(actual)},
+            {"Editor de texto", "IconoEditorTexto.png", (Runnable) () -> abrirEditorTexto(actual.getUser())},
+            {"Visor de imágenes", "IconoVisorImagenes.png", (Runnable) () -> abrirVisorImagenes(actual.getUser())},
+            {"Consola", "IconoConsola.png", (Runnable) () -> abrirConsola(actual.getUser())},
+            {"Reproductor", "IconoReproductorMusica.png", (Runnable) () -> abrirReproductorMusica(actual.getUser())},
+            {"INSTA+", "IconoInstaPlus.png", (Runnable) this::abrirInstaPlus}
+        };
+
+        int x = 20, y = 20, ancho = 84, alto = 84, espacio = 8;
+        for (int i = 0; i < apps.length; i++) {
+            String texto = (String) apps[i][0];
+            String archivoIcono = (String) apps[i][1];
+            Runnable accion = (Runnable) apps[i][2];
+
+            BotonPlano icono = new BotonPlano(texto, RecursosUI.cargarIcono(archivoIcono, 44, 44),
+                    null, new Color(255, 255, 255, 60), Color.WHITE);
+            icono.setVerticalTextPosition(SwingConstants.BOTTOM);
+            icono.setHorizontalTextPosition(SwingConstants.CENTER);
+            icono.setFont(icono.getFont().deriveFont(Font.BOLD, 11f));
+            icono.setBounds(x, y + i * (alto + espacio), ancho, alto);
+            icono.addActionListener(e -> accion.run());
+
+            escritorio.add(icono, Integer.valueOf(-1));
+        }
+    }
+
+    private void abrirInstaPlus() {
+        try {
+            new Insta.LoginJFrame().setVisible(true);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Conectar INSTA+",
+                    "Próximamente", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    private static final Color COLOR_BARRA = new Color(28, 32, 40);
+    private static final Color COLOR_BARRA_HOVER = new Color(255, 255, 255, 30);
+    private static final Color COLOR_ACENTO = new Color(0, 120, 215);
+    private static final Color COLOR_ACENTO_HOVER = new Color(0, 99, 177);
+
     private JPanel construirBarraInferior() {
         JPanel barraInferior = new JPanel(new BorderLayout());
+        barraInferior.setBackground(COLOR_BARRA);
+        barraInferior.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(0, 0, 0, 80)));
 
         barraInferior.add(construirBarraMenu(), BorderLayout.WEST);
 
         panelBarraTareas = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 2));
+        panelBarraTareas.setOpaque(false);
         JScrollPane scrollTareas = new JScrollPane(panelBarraTareas,
                 JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollTareas.setBorder(null);
-        scrollTareas.setPreferredSize(new Dimension(10, 40));
+        scrollTareas.setOpaque(false);
+        scrollTareas.getViewport().setOpaque(false);
+        scrollTareas.setPreferredSize(new Dimension(10, 44));
         barraInferior.add(scrollTareas, BorderLayout.CENTER);
-        JButton botonEscritorio = new JButton("Mostrar escritorio");
+
+        JButton botonEscritorio = new BotonPlano("Mostrar escritorio", null,
+                COLOR_ACENTO, COLOR_ACENTO_HOVER, Color.WHITE);
+        botonEscritorio.setBorder(BorderFactory.createEmptyBorder(8, 14, 8, 14));
         botonEscritorio.addActionListener(e -> mostrarEscritorio());
-        barraInferior.add(botonEscritorio, BorderLayout.EAST);
+        JPanel envoltorioBoton = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 6));
+        envoltorioBoton.setOpaque(false);
+        envoltorioBoton.add(botonEscritorio);
+        barraInferior.add(envoltorioBoton, BorderLayout.EAST);
         return barraInferior;
     }
 
@@ -124,7 +190,7 @@ public class VentanaPrincipal extends JFrame {
 
             ventanasAbiertas.put(clave, frame);
             escritorio.add(frame);
-            agregarBotonTarea(frame, titulo);
+            agregarBotonTarea(frame, titulo, icono);
         }
 
         try {
@@ -146,8 +212,9 @@ public class VentanaPrincipal extends JFrame {
         }
     }
 
-    private void agregarBotonTarea(JInternalFrame frame, String titulo) {
-        JButton boton = new JButton(titulo);
+    private void agregarBotonTarea(JInternalFrame frame, String titulo, Icon icono) {
+        JButton boton = new BotonPlano(titulo, icono, null, COLOR_BARRA_HOVER, Color.WHITE);
+        boton.setBorder(BorderFactory.createEmptyBorder(6, 10, 6, 10));
         boton.addActionListener(e -> alternarVentana(frame));
         botonesTareas.put(frame, boton);
         panelBarraTareas.add(boton);
@@ -198,7 +265,8 @@ public class VentanaPrincipal extends JFrame {
     private void abrirExplorador(Usuario usuario) {
         String username = usuario.getUser();
         String ruta = usuario.getEsAdmin() ? GestorArchivos.RAIZ : GestorArchivos.rutaCarpetaUsuario(username);
-        mostrarOCrearVentana("explorador:" + username, "Explorador de archivos — " + username, null,
+        mostrarOCrearVentana("explorador:" + username, "Explorador de archivos — " + username,
+                RecursosUI.cargarIcono("IconoExploradorArchivos.png", 20, 20),
                 () -> {
                     ExploradorPanel panel = new ExploradorPanel(ruta);
                     panel.setOyenteApertura(archivo -> manejarAperturaDeArchivo(archivo, username));
@@ -209,8 +277,7 @@ public class VentanaPrincipal extends JFrame {
     private void manejarAperturaDeArchivo(File archivo, String username) {
         String nombre = archivo.getName().toLowerCase();
 
-        if (nombre.endsWith(persistencia.Constantes.EXTENSION)
-                || nombre.endsWith(persistencia.Constantes.EXTENSION_LEGADO)) {
+        if (nombre.endsWith(persistencia.Constantes.EXTENSION)|| nombre.endsWith(persistencia.Constantes.EXTENSION_LEGADO)) {
             abrirEditorTexto(username, archivo);
         } else if (esImagen(nombre)) {
             abrirVisorImagenes(username, archivo);
@@ -224,8 +291,10 @@ public class VentanaPrincipal extends JFrame {
     }
 
     private boolean esImagen(String nombreEnMinusculas) {
-        return nombreEnMinusculas.endsWith(".jpg") || nombreEnMinusculas.endsWith(".jpeg")
-                || nombreEnMinusculas.endsWith(".png") || nombreEnMinusculas.endsWith(".gif")
+        return nombreEnMinusculas.endsWith(".jpg") || 
+                nombreEnMinusculas.endsWith(".jpeg")|| 
+                nombreEnMinusculas.endsWith(".png") 
+                || nombreEnMinusculas.endsWith(".gif")
                 || nombreEnMinusculas.endsWith(".bmp");
     }
 
@@ -236,7 +305,8 @@ public class VentanaPrincipal extends JFrame {
     private void abrirEditorTexto(String username, File archivoAAbrir) {
         String rutaUsuario = GestorArchivos.rutaCarpetaUsuario(username);
         String clave = "editor:" + username;
-        mostrarOCrearVentana(clave, "Editor de texto — " + username, null,
+        mostrarOCrearVentana(clave, "Editor de texto — " + username,
+                RecursosUI.cargarIcono("IconoEditorTexto.png", 20, 20),
                 () -> new GUIEditorTexto(rutaUsuario), 650, 450);
 
         if (archivoAAbrir != null) {
@@ -254,7 +324,8 @@ public class VentanaPrincipal extends JFrame {
     private void abrirVisorImagenes(String username, File archivoAAbrir) {
         String rutaUsuario = GestorArchivos.rutaCarpetaUsuario(username);
         String clave = "visor:" + username;
-        mostrarOCrearVentana(clave, "Visor de imágenes — " + username, null,
+        mostrarOCrearVentana(clave, "Visor de imágenes — " + username,
+                RecursosUI.cargarIcono("IconoVisorImagenes.png", 20, 20),
                 () -> new VisorImagenesPanel(rutaUsuario), 600, 450);
 
         if (archivoAAbrir != null) {
@@ -267,7 +338,8 @@ public class VentanaPrincipal extends JFrame {
 
     private void abrirConsola(String username) {
         String rutaUsuario = GestorArchivos.rutaCarpetaUsuario(username);
-        mostrarOCrearVentana("consola:" + username, "Consola — " + username, null,
+        mostrarOCrearVentana("consola:" + username, "Consola — " + username,
+                RecursosUI.cargarIcono("IconoConsola.png", 20, 20),
                 () -> new ConsolaPanel(rutaUsuario), 600, 380);
     }
 
@@ -278,7 +350,8 @@ public class VentanaPrincipal extends JFrame {
     private void abrirReproductorMusica(String username, File archivoAAbrir) {
         String rutaUsuario = GestorArchivos.rutaCarpetaUsuario(username);
         String clave = "reproductor:" + username;
-        mostrarOCrearVentana(clave, "Reproductor de Música — " + username, null,
+        mostrarOCrearVentana(clave, "Reproductor de Música — " + username,
+                RecursosUI.cargarIcono("IconoReproductorMusica.png", 20, 20),
                 () -> new reproductorPanel(rutaUsuario), 800, 500);
 
         if (archivoAAbrir != null) {
@@ -287,15 +360,6 @@ public class VentanaPrincipal extends JFrame {
                 ((reproductorPanel) frame.getContentPane()).abrirArchivoExterno(archivoAAbrir);
             }
         }
-    }
-
-    private void mostrarProximamente(String nombreHerramienta) {
-        mostrarOCrearVentana("proximamente:" + nombreHerramienta, nombreHerramienta, null, () -> {
-            JLabel label = new JLabel(nombreHerramienta + " — próximamente", SwingConstants.CENTER);
-            JPanel panel = new JPanel(new BorderLayout());
-            panel.add(label, BorderLayout.CENTER);
-            return panel;
-        }, 400, 200);
     }
 
     private void crearUsuarioDesdeAdmin() {

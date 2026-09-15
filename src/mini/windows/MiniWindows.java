@@ -16,11 +16,8 @@ public class MiniWindows {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        // TODO code application logic here
-        
-        
-        //System.out.println(Rutas.RUTA_RAIZ);
-        
+        aplicarLookAndFeelModerno();
+
         try {
             GestorArchivos.inicializarSistema();
         } catch (Exception e) {
@@ -31,5 +28,26 @@ public class MiniWindows {
         }
  
         SwingUtilities.invokeLater(() -> new LoginFrame().setVisible(true));
-    }    
+    }
+
+    private static void aplicarLookAndFeelModerno() {
+        try {
+            java.awt.Color acento = new java.awt.Color(0, 120, 215);
+
+            UIManager.put("nimbusBase", new java.awt.Color(51, 61, 74));
+            UIManager.put("nimbusBlueGrey", new java.awt.Color(180, 188, 196));
+            UIManager.put("control", new java.awt.Color(238, 240, 242));
+            UIManager.put("nimbusFocus", acento);
+            UIManager.put("nimbusSelectionBackground", acento);
+            UIManager.put("nimbusSelection", acento);
+
+            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (Exception ex) {
+        }
+    }
 }

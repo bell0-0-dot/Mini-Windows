@@ -11,11 +11,15 @@ public class ComandoCd implements Comando {
 
     @Override
     public String ejecutar(String[] args) {
-        if (args.length != 1) {
+        if (args.length == 0) {
             return "Uso correcto: cd <carpeta>";
         }
 
         String nombre = args[0];
+        
+        for (int i = 1; i < args.length; i++) {
+            nombre = nombre+" "+args[i];
+        }
 
         if (nombre.equals("..")) {
             if (sistema.cambiarAnterior()) {
