@@ -12,6 +12,7 @@ public class UsuarioInsta extends Usuario{
     private Genero genero;
     private int edad;
     private String archivoFoto;
+    private static final long serialVersionUID = 1L;
     
 
     public UsuarioInsta(String nombre, Genero genero, int edad, String User, String password, String nombreFoto) {
@@ -57,6 +58,4 @@ public class UsuarioInsta extends Usuario{
     public void setFechaRegistro(LocalDate fechaRegistro) {
         this.fechaRegistro = fechaRegistro;
     }
-    
-    
 }

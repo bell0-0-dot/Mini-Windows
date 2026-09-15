@@ -5,6 +5,7 @@
 package base;
 
 import java.io.Serializable;
+import java.util.Comparator;
 
 /**
  *
@@ -100,6 +101,23 @@ public class ListaEnlazada<T> implements Serializable{
         return length == 0;
     }
 
+    public void insertarOrdenado(T dato, Comparator<T> comparador){
+         Nodo<T> nuevo = new Nodo<>(dato);
+
+        if (cabeza == null || comparador.compare(dato, cabeza.getDato()) < 0) {
+            nuevo.setSiguiente(cabeza);
+            cabeza = nuevo;
+        } else {
+            Nodo<T> actual = cabeza;
+            while (actual.getSiguiente() != null
+                    && comparador.compare(dato, actual.getSiguiente().getDato()) >= 0) {
+                actual = actual.getSiguiente();
+            }
+            nuevo.setSiguiente(actual.getSiguiente());
+            actual.setSiguiente(nuevo);
+        }
+        length++;
+    }
 
     
 }

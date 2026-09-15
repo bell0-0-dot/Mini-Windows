@@ -9,8 +9,10 @@ package Insta;
  * @author vasqu
  */
 public enum Genero {
+    Selecciona_tu_genero,
     M,
     F,
     Otro
+    
     
 }

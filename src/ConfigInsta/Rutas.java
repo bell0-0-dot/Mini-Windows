@@ -18,6 +18,9 @@ public class Rutas {
         return Paths.get(RUTA_RAIZ,username).toString();
         
     }
+    public static String rutaFotoPerfil(String username, String nombreArchivo) {
+        return Paths.get(rutaImagenes(username), nombreArchivo).toString();
+    }
     
     public static String rutaInbox(String username){
         return Paths.get(rutaCarpetaUsuario(username),"inbox.ins").toString();

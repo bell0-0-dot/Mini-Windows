@@ -11,6 +11,9 @@ import Insta.UsuarioInsta;
 import base.Nodo;
 import java.io.IOException;
 import Insta.Genero;
+import java.io.File;
+import Insta.Publicacion;
+
 
 
 
@@ -64,7 +67,136 @@ public class ServicioArchivoInsta {
         }
         nuevo=new UsuarioInsta(nombre, genero,edad, username, password, nombreFoto);
         ArchivoUtil.agregarRegistro(Rutas.ARCHIVO_USERS, nuevo);
+        crearEstructuraUsuario(username);
         return nuevo;
     }
+    public static void crearEstructuraUsuario(String username) throws IOException{
+       File carpetaUsuario=new File(Rutas.rutaCarpetaUsuario(username));
+       if((!carpetaUsuario.exists()&&!carpetaUsuario.mkdirs())){
+           throw new IOException("No se pudo crear la carpeta del usuario "+ username);
+       }
+       
+       File carpetaImagenes=new File(Rutas.rutaImagenes(username));
+       if(!carpetaImagenes.exists()&&!carpetaImagenes.mkdirs()){
+           throw new IOException("Error al crear la carpeta del usuario: "+username);
+       }
+       
+       File carpetaFolders=new File(Rutas.rutaFolderPersonales(username));
+       if(!carpetaFolders.exists()&&!carpetaFolders.mkdirs()){
+           throw new IOException("Error al crear la carpeta deel usuario: "+username);
+       }
+       
+       File carpetaStickers=new File(Rutas.rutaStickersPersonales(username));
+       if(!carpetaStickers.exists()&&!carpetaStickers.mkdirs()){
+           throw new IOException("Error al crear la carpeta del usuario "+username);
+       }
+       
+       
+       
+           }
+    
+    //metodos para el timeline
+    public static ListaEnlazada<String>obtenerSeguidos(String username)throws ArchivoCorruptoException{
+       return ArchivoUtil.leerLista(Rutas.rutaFollowing(username));
+    }
+    
+    
+    public static  ListaEnlazada<Publicacion> ordenarPorFechaDesc(ListaEnlazada<Publicacion> combinado) {
+    int n = combinado.length();
+    Publicacion[] arreglo = new Publicacion[n];
+
+    for (int i = 0; i < n; i++) {
+        arreglo[i] = combinado.obtenerEn(i);
+    }
+
+    
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - 1 - i; j++) {
+            if (arreglo[j].getFecha().compareTo(arreglo[j + 1].getFecha()) < 0) {
+                Publicacion temp = arreglo[j];
+                arreglo[j] = arreglo[j + 1];
+                arreglo[j + 1] = temp;
+            }
+        }
+    }
+
+   
+    ListaEnlazada<Publicacion> ordenada = new ListaEnlazada<>();
+    for (int i = 0; i < n; i++) {
+        ordenada.insertarFinal(arreglo[i]);
+    }
+    return ordenada;
+}
+    
+    public static ListaEnlazada<Publicacion> obtenerTimeline(String username) throws ArchivoCorruptoException{
+        ListaEnlazada<Publicacion> combinado = new ListaEnlazada<>();
+
+    ListaEnlazada<Publicacion> propias = ArchivoUtil.leerLista(Rutas.rutaInsta(username));
+    for (int i = 0; i < propias.length(); i++) {
+        combinado.insertarFinal(propias.obtenerEn(i));
+    }
+
+    ListaEnlazada<String> seguidos = obtenerSeguidos(username);
+    for (int i = 0; i < seguidos.length(); i++) {
+        String usernameSeguido = seguidos.obtenerEn(i);
+        ListaEnlazada<Publicacion> publicacionesDeEse =
+                ArchivoUtil.leerLista(Rutas.rutaInsta(usernameSeguido));
+        for (int j = 0; j < publicacionesDeEse.length(); j++) {
+            combinado.insertarFinal(publicacionesDeEse.obtenerEn(j));
+        }
+    }
+
+    return ordenarPorFechaDesc(combinado);
+    }
+    
+    //panelPerfil ---metodos 
+    
+    public static ListaEnlazada<String> obtenerSeguidores(String username) throws ArchivoCorruptoException {
+        return ArchivoUtil.leerLista(Rutas.rutaFollowers(username));
+    }
+    //panelBuscar metodos necesarios:
+    
+    public static ListaEnlazada<Publicacion> buscarPorHashtag(String hashtag) throws ArchivoCorruptoException {
+        ListaEnlazada<Publicacion> resultado = new ListaEnlazada<>();
+        ListaEnlazada<UsuarioInsta> usuarios = cargarLista();
+
+        for (int i = 0; i < usuarios.length(); i++) {
+            String username = usuarios.obtenerEn(i).getUser();
+            ListaEnlazada<Publicacion> publicaciones = ArchivoUtil.leerLista(Rutas.rutaInsta(username));
+
+            for (int j = 0; j < publicaciones.length(); j++) {
+                Publicacion p = publicaciones.obtenerEn(j);
+                if (p.getHashtags().contiene(hashtag)) {
+                    resultado.insertarFinal(p);
+                }
+            }
+        }
+        return ordenarPorFechaDesc(resultado);
+    }
+    
+    public static ListaEnlazada<UsuarioInsta> buscarUsuariosParcial(String texto) throws ArchivoCorruptoException {
+        ListaEnlazada<UsuarioInsta> resultado = new ListaEnlazada<>();
+        ListaEnlazada<UsuarioInsta> todos = cargarLista();
+
+        for (int i = 0; i < todos.length(); i++) {
+            UsuarioInsta u = todos.obtenerEn(i);
+            if (u.getUser().toLowerCase().contains(texto.toLowerCase())) {
+                resultado.insertarFinal(u);
+            }
+        }
+        return resultado;
+    }
+    
+    public static ListaEnlazada<UsuarioInsta> obtenerUsuariosSugeridos(int cantidad) throws ArchivoCorruptoException {
+        ListaEnlazada<UsuarioInsta> todos = cargarLista();
+        ListaEnlazada<UsuarioInsta> sugeridos = new ListaEnlazada<>();
+
+        for (int i = 0; i < Math.min(cantidad, todos.length()); i++) {
+            sugeridos.insertarFinal(todos.obtenerEn(i));
+        }
+        return sugeridos;
+    }
+    
+    
 }
     

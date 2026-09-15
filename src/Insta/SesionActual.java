@@ -30,6 +30,7 @@ public class SesionActual {
         userActual=null;
     }
 
+    
     public UsuarioInsta getUserActual() {
         return userActual;
     }
