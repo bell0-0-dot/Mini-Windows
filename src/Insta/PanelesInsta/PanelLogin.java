@@ -31,6 +31,11 @@ import java.util.function.Consumer;
 import javax.swing.BorderFactory;
 import javax.swing.SwingConstants;
 import Insta.NavegarInsta;
+import Servidor.ClienteInsta;
+import Servidor.PeticionRed;
+import Servidor.RespuestaRed;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 
@@ -174,7 +179,13 @@ public class PanelLogin extends PanelAuth{
     }
     
     private void configurarEventos() {
-        botonIniciarS.addActionListener(e -> intentarLogin()
+        botonIniciarS.addActionListener(e -> {
+            try {
+                intentarLogin();
+            } catch (Exception ex) {
+                Logger.getLogger(PanelLogin.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
                 
         );
 
@@ -187,34 +198,41 @@ public class PanelLogin extends PanelAuth{
         });
     }
     
-    private void intentarLogin() {
+    private void intentarLogin() throws Exception {
         String username = campoUsername.getText();
         char[] passwordChars = campoPassword.getPassword();
         String password = new String(passwordChars);
 
         try {
-            UsuarioInsta usuario = ServicioArchivoInsta.validarLogin(username, password);
+            PeticionRed peticion = new PeticionRed("LOGIN", username, password);
+             RespuestaRed respuesta = ClienteInsta.getInstancia().enviarPeticion(peticion);
+
+        if (respuesta.isExito()) {
+            UsuarioInsta usuario = (UsuarioInsta) respuesta.getContenido();
             SesionActual.getInstancia().iniciarSesion(usuario);
             labelError.setText(" ");
             System.out.println("Login exitoso: " + username);
             limpiarCampos();
-            
             navegar.accept("panelApp");
+        } else {
             
-            
-            System.out.println("Logeado");
-        } catch (UsuarioInexistenteException ex) {
-            labelError.setText("El usuario no existe.");
-        } catch (PasswordIncorrectoException ex) {
-            labelError.setText("Contraseña incorrecta.");
-        } catch (CuentaDesactivadaException ex) {
-            labelError.setText("Esta cuenta está desactivada.");
-        } catch (ArchivoCorruptoException | IOException ex) {
-            labelError.setText("Error del sistema. Intenta de nuevo.");
+            Object err = respuesta.getContenido();
+            if (err instanceof UsuarioInexistenteException) {
+                labelError.setText("El usuario no existe.");
+            } else if (err instanceof PasswordIncorrectoException) {
+                labelError.setText("Contraseña incorrecta.");
+            } else if (err instanceof CuentaDesactivadaException) {
+                labelError.setText("Esta cuenta está desactivada.");
+            } else {
+                labelError.setText("Error del sistema. Intenta de nuevo.");
+            }
+        }
+        } catch (Exception ex) {
+            labelError.setText("Error de conexión con el servidor.");
         } finally {
             java.util.Arrays.fill(passwordChars, ' ');
-        }
     }
+}
     @Override
     protected void limpiarCampos(){
         campoUsername.setText("Usuario");

@@ -1,13 +1,14 @@
 
 package Insta;
 import base.Usuario;
+import java.io.Serializable;
 import java.time.LocalDate;
 
 /**
  *
  * @author vasqu
  */
-public class UsuarioInsta extends Usuario{
+public class UsuarioInsta extends Usuario implements Serializable{
     private String nombre;
     private Genero genero;
     private int edad;

@@ -4,11 +4,13 @@
  */
 package Insta;
 
+import java.io.Serializable;
+
 /**
  *
  * @author vasqu
  */
-public enum Genero {
+public enum Genero implements Serializable{
     Selecciona_tu_genero,
     M,
     F,
