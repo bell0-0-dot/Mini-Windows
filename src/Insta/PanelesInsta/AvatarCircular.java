@@ -30,8 +30,13 @@ public class AvatarCircular extends JComponent{
         this.diametro = diametro;
         setPreferredSize(new Dimension(diametro, diametro));
         setMaximumSize(new Dimension(diametro, diametro));
+        setMinimumSize(new Dimension(diametro, diametro));
+        
     }
-    
+    public void setImagen(Image nuevaImagen) {
+        this.imagen = nuevaImagen;
+        repaint();
+    }
     @Override
     protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g.create();

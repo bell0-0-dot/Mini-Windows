@@ -27,6 +27,7 @@ public class PanelApp extends JPanel implements NavegarInsta{
     private static final String TARJETA_INBOX = "inbox";
     private static final String TARJETA_NOTIFICACIONES = "notificaciones";
     private static final String TARJETA_PUBLICAR = "publicar";
+    private static final String TARJETA_EDITAR = "editar";
 
     private CardLayout cardLayout;
     private JPanel contenedorTarjetas;
@@ -36,6 +37,7 @@ public class PanelApp extends JPanel implements NavegarInsta{
     private PanelBuscar panelBuscar;
     private PanelLogin panelLogin;
     private PanelInbox panelInbox;
+    private PanelEditarPerfil editarPerfil;
     private NavegarInsta navegador;
 
     public PanelApp(NavegarInsta navegador) {
@@ -50,13 +52,14 @@ public class PanelApp extends JPanel implements NavegarInsta{
         panelPerfil = new PanelPerfil(this, SesionActual.getInstancia().getUserActual().getUser());
         panelBuscar = new PanelBuscar(this);
         panelInbox = new PanelInbox(this);
-       
+        editarPerfil=new PanelEditarPerfil(this);
      
 
         contenedorTarjetas.add(panelTimeline, TARJETA_TIMELINE);
         contenedorTarjetas.add(panelPerfil, TARJETA_PERFIL);
         contenedorTarjetas.add(panelBuscar, TARJETA_BUSCAR);
         contenedorTarjetas.add(panelInbox, TARJETA_INBOX);
+        contenedorTarjetas.add(editarPerfil,TARJETA_EDITAR);
  
         add(new PanelSidebar(this), BorderLayout.WEST);
         } catch (ArchivoCorruptoException e) {
@@ -92,7 +95,16 @@ public class PanelApp extends JPanel implements NavegarInsta{
     cardLayout.show(contenedorTarjetas, TARJETA_PERFIL);
     }
     @Override
-    public void mostrarEditarPerfil(){};
+    public void mostrarEditarPerfil(){
+        if (editarPerfil != null) {
+       
+        cardLayout.show(contenedorTarjetas, TARJETA_EDITAR);
+        
+     
+        contenedorTarjetas.revalidate();
+        contenedorTarjetas.repaint();
+    }
+    };
     
     @Override
     public void mostrarBuscar() { 
@@ -142,12 +154,14 @@ public class PanelApp extends JPanel implements NavegarInsta{
             panelPerfil = new PanelPerfil(this, SesionActual.getInstancia().getUserActual().getUser());
             panelBuscar = new PanelBuscar(this);
             panelInbox = new PanelInbox(this);
-
+            editarPerfil = new PanelEditarPerfil(this);
+            
             contenedorTarjetas.add(panelTimeline, TARJETA_TIMELINE);
             contenedorTarjetas.add(panelPerfil, TARJETA_PERFIL);
             contenedorTarjetas.add(panelBuscar, TARJETA_BUSCAR);
             contenedorTarjetas.add(panelInbox, TARJETA_INBOX);
-
+            contenedorTarjetas.add(editarPerfil,TARJETA_EDITAR);
+           
             
             add(new PanelSidebar(this), BorderLayout.WEST);
             add(contenedorTarjetas, BorderLayout.CENTER);

@@ -65,16 +65,7 @@ public class PanelPerfil extends JPanel{
         }
     }
 
-    public void cargarPerfil(String username) throws ArchivoCorruptoException {
-        this.usernameMostrado = username;
-        panelContenido.removeAll();
-
-        panelContenido.add(construirEncabezado());
-        panelContenido.add(construirCuadricula());
-
-        revalidate();
-        repaint();
-    }
+    
 
     private JPanel construirEncabezado() throws ArchivoCorruptoException {
         JPanel panel = new JPanel();
@@ -200,4 +191,15 @@ public class PanelPerfil extends JPanel{
         contenedorGrid.setMaximumSize(dimGenerada);
 
         return contenedorGrid;
-    }}
+    }
+    public void cargarPerfil(String username) throws ArchivoCorruptoException {
+        this.usernameMostrado = username;
+        panelContenido.removeAll();
+
+        panelContenido.add(construirEncabezado());
+        panelContenido.add(construirCuadricula());
+
+        revalidate();
+        repaint();
+    }
+}

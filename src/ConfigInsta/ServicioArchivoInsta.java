@@ -5,6 +5,7 @@ import Excepciones.CuentaDesactivadaException;
 import Excepciones.PasswordIncorrectoException;
 import Excepciones.UsernameDuplicadoException;
 import Excepciones.UsuarioInexistenteException;
+import Insta.Comentario;
 import base.ListaEnlazada;
 import base.ArchivoUtil;
 import Insta.UsuarioInsta;
@@ -70,6 +71,7 @@ public class ServicioArchivoInsta {
         crearEstructuraUsuario(username);
         return nuevo;
     }
+    
     public static void crearEstructuraUsuario(String username) throws IOException{
        File carpetaUsuario=new File(Rutas.rutaCarpetaUsuario(username));
        if((!carpetaUsuario.exists()&&!carpetaUsuario.mkdirs())){
@@ -196,7 +198,40 @@ public class ServicioArchivoInsta {
         }
         return sugeridos;
     }
+    //comentarios// metodos
+    //falta server para guardar comentarios en publicaciones
+    //ajenas
+    public static void agregarComentario(String autorPublicacion, Publicacion publicacionObjetivo, Comentario nuevoComentario) throws ArchivoCorruptoException, IOException {
+        String ruta = Rutas.rutaInsta(autorPublicacion);
+        ListaEnlazada<Publicacion> publicaciones = ArchivoUtil.leerLista(ruta);
+
+        for (int i = 0; i < publicaciones.length(); i++) {
+            Publicacion p = publicaciones.obtenerEn(i);
+            if (p == publicacionObjetivo) {  
+                p.agregarComentario(nuevoComentario);
+                break;
+            }
+        }
+
+        ArchivoUtil.guardarLista(ruta, publicaciones);
+}
     
+    //metodo para guardar cambios de usuarios:
+    public static void actualizarUsuario(UsuarioInsta usuarioModificado) throws ArchivoCorruptoException, IOException {
+    ListaEnlazada<UsuarioInsta> lista = cargarLista();
+    Nodo<UsuarioInsta> actual = lista.getCabeza();
+
+    while (actual != null) {
+       
+        if (actual.getDato().equals(usuarioModificado)) {
+            actual.setDato(usuarioModificado); 
+            break;
+        }
+        actual = actual.getSiguiente();
+    }
+
+    guardarLista(lista);
+}
     
 }
     
