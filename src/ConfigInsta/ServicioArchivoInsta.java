@@ -1,5 +1,6 @@
 
 package ConfigInsta;
+import ConfigInsta.Rutas;
 import Excepciones.ArchivoCorruptoException;
 import Excepciones.CuentaDesactivadaException;
 import Excepciones.PasswordIncorrectoException;
@@ -13,8 +14,10 @@ import base.Nodo;
 import java.io.IOException;
 import Insta.Genero;
 import Insta.Mensaje;
+import Insta.Notificacion;
 import java.io.File;
 import Insta.Publicacion;
+import Insta.Reaccion;
 
 
 
@@ -102,16 +105,13 @@ public class ServicioArchivoInsta {
         } catch (Exception e) {
             throw new IOException("Error al crear el archivo inbox.ins para el usuario: " + username, e);
         }
+        }
+        
     }
-       
-       
-       
-           }
+
     
-    //metodos para el timeline
-    public static ListaEnlazada<String>obtenerSeguidos(String username)throws ArchivoCorruptoException{
-       return ArchivoUtil.leerLista(Rutas.rutaFollowing(username));
-    }
+    
+  
     
     
     public static  ListaEnlazada<Publicacion> ordenarPorFechaDesc(ListaEnlazada<Publicacion> combinado) {
@@ -141,6 +141,16 @@ public class ServicioArchivoInsta {
     return ordenada;
 }
     
+    public static void guardarPublicacion(Publicacion pub) throws ArchivoCorruptoException, IOException {
+        String ruta = Rutas.rutaInsta(pub.getAutor());
+        ListaEnlazada<Publicacion> publicaciones = ArchivoUtil.leerLista(ruta);
+        if (publicaciones == null) {
+            publicaciones = new ListaEnlazada<>();
+        }
+        publicaciones.insertarFinal(pub);
+        ArchivoUtil.guardarLista(ruta, publicaciones);
+    }
+    
     public static ListaEnlazada<Publicacion> obtenerTimeline(String username) throws ArchivoCorruptoException{
         ListaEnlazada<Publicacion> combinado = new ListaEnlazada<>();
 
@@ -162,11 +172,61 @@ public class ServicioArchivoInsta {
     return ordenarPorFechaDesc(combinado);
     }
     
+    
+      //metodos para el timeline
+    public static ListaEnlazada<String>obtenerSeguidos(String username)throws ArchivoCorruptoException{
+       return ArchivoUtil.leerLista(Rutas.rutaFollowing(username));
+    }
+    
+    public static void seguirUsuario(String miUsuario, String usuarioASeguir) throws ArchivoCorruptoException, IOException {
+        
+        String rutaFollowing = Rutas.rutaFollowing(miUsuario);
+        ListaEnlazada<String> misSeguidos = ArchivoUtil.leerLista(rutaFollowing);
+        if (misSeguidos == null) misSeguidos = new ListaEnlazada<>();
+
+        if (!misSeguidos.contiene(usuarioASeguir)) {
+            misSeguidos.insertarFinal(usuarioASeguir);
+            ArchivoUtil.guardarLista(rutaFollowing, misSeguidos);
+        }
+
+       
+        String rutaFollowers = Rutas.rutaFollowers(usuarioASeguir);
+        ListaEnlazada<String> susSeguidores = ArchivoUtil.leerLista(rutaFollowers);
+        if (susSeguidores == null) susSeguidores = new ListaEnlazada<>();
+
+        if (!susSeguidores.contiene(miUsuario)) {
+            susSeguidores.insertarFinal(miUsuario);
+            ArchivoUtil.guardarLista(rutaFollowers, susSeguidores);
+        }
+    }
+    public static void dejarDeSeguirUsuario(String miUsuario, String usuarioADejar) throws ArchivoCorruptoException, IOException {
+        
+        String rutaFollowing = Rutas.rutaFollowing(miUsuario);
+        ListaEnlazada<String> misSeguidos = ArchivoUtil.leerLista(rutaFollowing);
+        if (misSeguidos != null && misSeguidos.contiene(usuarioADejar)) {
+            misSeguidos.eliminar(usuarioADejar);
+            ArchivoUtil.guardarLista(rutaFollowing, misSeguidos);
+        }
+
+        
+        String rutaFollowers = Rutas.rutaFollowers(usuarioADejar);
+        ListaEnlazada<String> susSeguidores = ArchivoUtil.leerLista(rutaFollowers);
+        if (susSeguidores != null && susSeguidores.contiene(miUsuario)) {
+            susSeguidores.eliminar(miUsuario);
+            ArchivoUtil.guardarLista(rutaFollowers, susSeguidores);
+        }
+    }
+    
     //panelPerfil ---metodos 
     
     public static ListaEnlazada<String> obtenerSeguidores(String username) throws ArchivoCorruptoException {
         return ArchivoUtil.leerLista(Rutas.rutaFollowers(username));
     }
+    
+    
+    
+    
+    
     //panelBuscar metodos necesarios:
     
     public static ListaEnlazada<Publicacion> buscarPorHashtag(String hashtag) throws ArchivoCorruptoException {
@@ -216,16 +276,47 @@ public class ServicioArchivoInsta {
         String ruta = Rutas.rutaInsta(autorPublicacion);
         ListaEnlazada<Publicacion> publicaciones = ArchivoUtil.leerLista(ruta);
 
-        for (int i = 0; i < publicaciones.length(); i++) {
-            Publicacion p = publicaciones.obtenerEn(i);
-            if (p == publicacionObjetivo) {  
-                p.agregarComentario(nuevoComentario);
-                break;
-            }
-        }
+        if (publicaciones != null) {
+            for (int i = 0; i < publicaciones.length(); i++) {
+                Publicacion p = publicaciones.obtenerEn(i);
 
-        ArchivoUtil.guardarLista(ruta, publicaciones);
+                
+                if (p.getAutor().equalsIgnoreCase(publicacionObjetivo.getAutor()) &&
+                    p.getFecha().equals(publicacionObjetivo.getFecha())) {
+
+                    p.agregarComentario(nuevoComentario);
+                    break;
+                }
+            }
+            ArchivoUtil.guardarLista(ruta, publicaciones);
+        }
 }
+    public static void toggleLike(String autorPublicacion, Publicacion publicacionObjetivo, Reaccion reaccion) 
+            throws ArchivoCorruptoException, IOException {
+        String ruta = Rutas.rutaInsta(autorPublicacion);
+        ListaEnlazada<Publicacion> publicaciones = ArchivoUtil.leerLista(ruta);
+
+        if (publicaciones != null) {
+            for (int i = 0; i < publicaciones.length(); i++) {
+                Publicacion p = publicaciones.obtenerEn(i);
+
+                // Comparación segura por autor y fecha exacta de creación
+                if (p.getAutor().equalsIgnoreCase(publicacionObjetivo.getAutor()) &&
+                    p.getFecha().equals(publicacionObjetivo.getFecha())) {
+
+                    if (p.getReacciones().contiene(reaccion)) {
+                        p.getReacciones().eliminar(reaccion);
+                    } else {
+                        p.agregarReaccion(reaccion);
+                    }
+                    break;
+                }
+            }
+            ArchivoUtil.guardarLista(ruta, publicaciones);
+        }
+    }
+    
+    
     
     //metodo para guardar cambios de usuarios:
     public static void actualizarUsuario(UsuarioInsta usuarioModificado) throws ArchivoCorruptoException, IOException {
@@ -290,5 +381,21 @@ public class ServicioArchivoInsta {
         return chatFiltrado;
     }
     
+    public static void guardarNotificacion(Notificacion notif) throws ArchivoCorruptoException, IOException {
+        String ruta = Rutas.rutaNotificaciones(notif.getReceptor());
+        ListaEnlazada<Notificacion> lista = ArchivoUtil.leerLista(ruta);
+        if (lista == null) {
+            lista = new ListaEnlazada<>();
+        }
+        lista.insertarFinal(notif);
+        ArchivoUtil.guardarLista(ruta, lista);
+    }
+
+    public static ListaEnlazada<Notificacion> obtenerNotificaciones(String username) throws ArchivoCorruptoException {
+        ListaEnlazada<Notificacion> lista = ArchivoUtil.leerLista(Rutas.rutaNotificaciones(username));
+        return lista != null ? lista : new ListaEnlazada<>();
+    }
 }
+    
+
     
