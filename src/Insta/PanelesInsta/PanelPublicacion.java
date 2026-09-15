@@ -13,6 +13,9 @@ import ConfigInsta.ServicioArchivoInsta;
 import Insta.UsuarioInsta;
 import Excepciones.ArchivoCorruptoException;
 import Insta.SesionActual;
+import Servidor.ClienteInsta;
+import Servidor.PeticionRed;
+import Servidor.RespuestaRed;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
@@ -32,6 +35,7 @@ import javax.swing.Box;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JTextPane;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
@@ -173,14 +177,32 @@ public class PanelPublicacion extends JPanel{
     botonLike.setMargin(new java.awt.Insets(0, 0, 0, 0));
     botonLike.setOpaque(false);
     botonLike.addActionListener(e -> {
-        if (yaDioLike[0]) {
-            publicacion.getReacciones().eliminar(new Reaccion(usuarioActual, null));
-        } else {
-            publicacion.agregarReaccion(new Reaccion(usuarioActual, LocalDateTime.now()));
+       try {
+            
+            Reaccion reaccion = new Reaccion(usuarioActual, LocalDateTime.now());
+
+         
+            PeticionRed req = new PeticionRed("TOGGLE_LIKE", publicacion.getAutor(), publicacion, reaccion); // <-- Petición Servidor
+            RespuestaRed res = ClienteInsta.getInstancia().enviarPeticion(req); // <-- Petición Servidor
+
+           
+            if (res != null && res.isExito()) {
+                if (yaDioLike[0]) {
+                    publicacion.getReacciones().eliminar(new Reaccion(usuarioActual, null));
+                } else {
+                    publicacion.agregarReaccion(reaccion);
+                }
+                yaDioLike[0] = !yaDioLike[0];
+                botonLike.setIcon(yaDioLike[0] ? iconoLikeRelleno : iconoLikeContorno);
+                contadorLikes.setText(publicacion.getReacciones().length() + " likes");
+            } else {
+                String error = (res != null) ? res.getMensajeError() : "Error de comunicación con el servidor.";
+                JOptionPane.showMessageDialog(this, error, "Error de Red", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception ex) {
+            System.err.println("Error al procesar el Like en red: " + ex.getMessage());
+            //JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor para registrar el like.", "Error de Conexión", JOptionPane.ERROR_MESSAGE);
         }
-        yaDioLike[0] = !yaDioLike[0];
-        botonLike.setIcon(yaDioLike[0] ? iconoLikeRelleno : iconoLikeContorno);
-        contadorLikes.setText(publicacion.getReacciones().length() + " likes");
     });
 
     JLabel iconoComentarios = new JLabel(iconoComentario);

@@ -161,6 +161,8 @@ public class ManejarCliente implements Runnable{
                     }
                     return new RespuestaRed(true, "Like procesado", null);
                 }
+                
+                
                 case "AGREGAR_COMENTARIO": {
                     String autorPub = (String) peticion.getParametros()[0];
                     Publicacion publicacionObj = (Publicacion) peticion.getParametros()[1];
