@@ -250,8 +250,13 @@ public class PanelLogin extends PanelAuth{
             );
 
             limpiarCampos();
+            
 
-            navegar.accept("panelApp");
+            if (getParent() instanceof NavegarInsta) {
+                ((NavegarInsta) getParent()).alIniciarSesion();
+            } else {
+                navegar.accept("login_exitoso"); 
+            }
 
         } else {
 
