@@ -10,6 +10,7 @@ import Insta.SesionActual;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
+import java.awt.FlowLayout;
 import java.awt.Frame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -28,6 +29,7 @@ public class PanelApp extends JPanel implements NavegarInsta{
     private static final String TARJETA_NOTIFICACIONES = "notificaciones";
     private static final String TARJETA_PUBLICAR = "publicar";
     private static final String TARJETA_EDITAR = "editar";
+    private static final String TARJETA_NOTI = "notificaciones";
 
     private CardLayout cardLayout;
     private JPanel contenedorTarjetas;
@@ -36,6 +38,7 @@ public class PanelApp extends JPanel implements NavegarInsta{
     private PanelPerfil panelPerfil;
     private PanelBuscar panelBuscar;
     private PanelLogin panelLogin;
+    private PanelNotificaciones panelNotificaciones;
     private PanelInbox panelInbox;
     private PanelEditarPerfil editarPerfil;
     private NavegarInsta navegador;
@@ -53,6 +56,7 @@ public class PanelApp extends JPanel implements NavegarInsta{
         panelBuscar = new PanelBuscar(this);
         panelInbox = new PanelInbox(this);
         editarPerfil=new PanelEditarPerfil(this);
+        panelNotificaciones=new PanelNotificaciones(this);
      
 
         contenedorTarjetas.add(panelTimeline, TARJETA_TIMELINE);
@@ -60,6 +64,7 @@ public class PanelApp extends JPanel implements NavegarInsta{
         contenedorTarjetas.add(panelBuscar, TARJETA_BUSCAR);
         contenedorTarjetas.add(panelInbox, TARJETA_INBOX);
         contenedorTarjetas.add(editarPerfil,TARJETA_EDITAR);
+        contenedorTarjetas.add(panelNotificaciones,TARJETA_NOTI);
  
         add(new PanelSidebar(this), BorderLayout.WEST);
         } catch (ArchivoCorruptoException e) {
@@ -117,7 +122,14 @@ public class PanelApp extends JPanel implements NavegarInsta{
     }
 
     @Override
-    public void mostrarNotificaciones() { }
+    public void mostrarNotificaciones() {
+        if (panelNotificaciones != null) {
+        
+        panelNotificaciones.cargarHistorialNotificaciones();
+    }
+    cardLayout.show(contenedorTarjetas, TARJETA_NOTI);
+      
+    }
 
     @Override
     public void mostrarPublicar() { 
@@ -155,12 +167,14 @@ public class PanelApp extends JPanel implements NavegarInsta{
             panelBuscar = new PanelBuscar(this);
             panelInbox = new PanelInbox(this);
             editarPerfil = new PanelEditarPerfil(this);
+            panelNotificaciones=new PanelNotificaciones(this);
             
             contenedorTarjetas.add(panelTimeline, TARJETA_TIMELINE);
             contenedorTarjetas.add(panelPerfil, TARJETA_PERFIL);
             contenedorTarjetas.add(panelBuscar, TARJETA_BUSCAR);
             contenedorTarjetas.add(panelInbox, TARJETA_INBOX);
             contenedorTarjetas.add(editarPerfil,TARJETA_EDITAR);
+             contenedorTarjetas.add(panelNotificaciones,TARJETA_NOTI);
            
             
             add(new PanelSidebar(this), BorderLayout.WEST);

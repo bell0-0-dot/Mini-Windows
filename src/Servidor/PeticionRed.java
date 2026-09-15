@@ -22,6 +22,8 @@ public class PeticionRed implements Serializable {
         this.parametros = parametros;
     }
 
-    public String getComando() { return comando; }
-    public Object[] getParametros() { return parametros; }
+    public String getComando() { 
+        return comando; }
+    public Object[] getParametros() { 
+        return parametros; }
 }

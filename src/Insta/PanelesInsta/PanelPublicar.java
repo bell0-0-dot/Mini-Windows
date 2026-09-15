@@ -9,6 +9,9 @@ import ConfigInsta.UtilImagen;
 import Excepciones.ArchivoCorruptoException;
 import Insta.Publicacion;
 import Insta.SesionActual;
+import Servidor.ClienteInsta;
+import Servidor.PeticionRed;
+import Servidor.RespuestaRed;
 import base.ArchivoUtil;
 import base.ListaEnlazada;
 import java.awt.BorderLayout;
@@ -459,7 +462,7 @@ public class PanelPublicar extends JDialog{
 
             ListaEnlazada<String> menciones = new ListaEnlazada<>();
             ListaEnlazada<String> hashtags = new ListaEnlazada<>();
-
+            
             extraerHashtagsYMenciones(texto, menciones, hashtags);
 
            
@@ -472,20 +475,32 @@ public class PanelPublicar extends JDialog{
                 nombreNuevoArchivo,
                 stickerSeleccionado
             );
+            PeticionRed peticion = new PeticionRed("NUEVA_PUBLICACION", nueva);
+            RespuestaRed respuesta = ClienteInsta.getInstancia().enviarPeticion(peticion);
 
-            String rutaArchivoInsta = Rutas.rutaInsta(usuarioActual);
+            if (respuesta != null && respuesta.isExito()) {
+                JOptionPane.showMessageDialog(this, "¡Publicación realizada!");
+                dispose();
+            } else {
+                String errorMsg = (respuesta != null) ? respuesta.getMensajeError() : "Sin respuesta";
+                JOptionPane.showMessageDialog(this, "Error del servidor: " + errorMsg, "Error", JOptionPane.ERROR_MESSAGE);
+            }
+
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, "Error al guardar la imagen: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            } catch (Exception e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Error de comunicación con el servidor.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+            
+            
+            /*String rutaArchivoInsta = Rutas.rutaInsta(usuarioActual);
             ListaEnlazada<Publicacion> publicaciones = ArchivoUtil.leerLista(rutaArchivoInsta);
             publicaciones.insertarFinal(nueva);
-            ArchivoUtil.guardarLista(rutaArchivoInsta, publicaciones);
+            ArchivoUtil.guardarLista(rutaArchivoInsta, publicaciones);*/
 
             JOptionPane.showMessageDialog(this, "¡Publicación realizada!");
             dispose();
-
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Error al guardar el archivo: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error al procesar la publicación.", "Error", JOptionPane.ERROR_MESSAGE);
-        }
     }
 
     private void extraerHashtagsYMenciones(String texto, ListaEnlazada<String> menciones, ListaEnlazada<String> hashtags) {

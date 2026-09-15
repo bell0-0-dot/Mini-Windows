@@ -11,6 +11,9 @@ import Excepciones.ArchivoCorruptoException;
 import Insta.NavegarInsta;
 import Insta.Publicacion;
 import Insta.SesionActual;
+import Servidor.ClienteInsta;
+import Servidor.PeticionRed;
+import Servidor.RespuestaRed;
 import base.ArchivoUtil;
 import base.ListaEnlazada;
 import java.awt.BorderLayout;
@@ -27,6 +30,7 @@ import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
@@ -139,15 +143,31 @@ public class PanelPerfil extends JPanel{
         boton.setBackground(new Color(0, 149, 246));
         boton.setForeground(Color.WHITE);
         boton.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        
         boton.addActionListener(e -> {
-            if (yaLoSigo) {
-                seguidores.eliminar(usuarioActual);
+            try{
+            String comandoPeticion = yaLoSigo ? "DEJAR_SEGUIR_USUARIO" : "SEGUIR_USUARIO";
+            PeticionRed req = new PeticionRed(comandoPeticion, usuarioActual, usernameMostrado);
+            RespuestaRed res = ClienteInsta.getInstancia().enviarPeticion(req);
+
+            if (res != null && res.isExito()) { 
+                try {
+               
+                    cargarPerfil(usernameMostrado); 
+                } catch (ArchivoCorruptoException ex) {
+                    ex.printStackTrace();
+                }
             } else {
-                seguidores.insertarFinal(usuarioActual);
+                String msgError = (res != null) ? res.getMensajeError() : "Error de comunicación con el servidor"; // <-- Petición Servidor
+                JOptionPane.showMessageDialog(this, msgError, "Error", JOptionPane.ERROR_MESSAGE); // <-- Petición Servidor
             }
-            try {
-                cargarPerfil(usernameMostrado);
-            } catch (ArchivoCorruptoException ex) { }
+            }catch(Exception y){
+                y.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Error de comunicación con el servidor.", "Error", JOptionPane.ERROR_MESSAGE);
+            
+            }
+            
         });
         return boton;
     }

@@ -13,6 +13,9 @@ import Insta.Publicacion;
 import ConfigInsta.ServicioArchivoInsta;
 import Excepciones.ArchivoCorruptoException;
 import Insta.UsuarioInsta;
+import Servidor.ClienteInsta;
+import Servidor.PeticionRed;
+import Servidor.RespuestaRed;
 import base.ListaEnlazada;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -26,6 +29,7 @@ import java.awt.event.MouseEvent;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 /**
  *
  * @author vasqu
@@ -87,16 +91,40 @@ public class PanelTimeline extends JPanel{
         
         contenedorPublicaciones.removeAll();
         panelSugerencias.removeAll();
-        String username=SesionActual.getInstancia().getUserActual().getUser();
-        ListaEnlazada<Publicacion>publicaciones=new ServicioArchivoInsta().obtenerTimeline(username);
-        
-        for (int i = 0; i < publicaciones.length(); i++) {
-            Publicacion p=publicaciones.obtenerEn(i);
-            contenedorPublicaciones.add(new PanelPublicacion(p,navegador));
-            contenedorPublicaciones.setAlignmentX(Component.CENTER_ALIGNMENT);
+         String username=SesionActual.getInstancia().getUserActual().getUser();
+         
+         try {
+          
+            PeticionRed reqFeed = new PeticionRed("OBTENER_TIMELINE", username, null);
+            RespuestaRed resFeed = ClienteInsta.getInstancia().enviarPeticion(reqFeed); 
+
+            ListaEnlazada<Publicacion> publicaciones;
+
+            if (resFeed != null && resFeed.isExito() && resFeed.getContenido() instanceof ListaEnlazada) { 
+                publicaciones = (ListaEnlazada<Publicacion>) resFeed.getContenido();
+            } else {
+               
+                publicaciones = new ServicioArchivoInsta().obtenerTimeline(username);
+            }
+
+            if (publicaciones != null) {
+                for (int i = 0; i < publicaciones.length(); i++) {
+                    Publicacion p = publicaciones.obtenerEn(i);
+                    contenedorPublicaciones.add(new PanelPublicacion(p, navegador));
+                    contenedorPublicaciones.setAlignmentX(Component.CENTER_ALIGNMENT);
+                }
+            }
+        } catch (Exception e) { 
+            System.err.println("Error al cargar publicaciones del timeline: " + e.getMessage());
+            contenedorPublicaciones.add(new JLabel("No se pudieron cargar las publicaciones."));
         }
-        construirBarraLateral(username);
-        
+
+       
+        try {
+            construirBarraLateral(username);
+        } catch (ArchivoCorruptoException e) {
+            System.err.println("Error al cargar barra lateral: " + e.getMessage());
+        }
         contenedorPublicaciones.revalidate();
         contenedorPublicaciones.repaint();
         panelSugerencias.revalidate();
@@ -216,24 +244,49 @@ public class PanelTimeline extends JPanel{
         btnSeguir.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (btnSeguir.getText().equals("Seguir")) {
-                    //server
-                    btnSeguir.setText("Siguiendo");
-                    btnSeguir.setForeground(Color.BLACK);
-                } else {
-                    btnSeguir.setText("Seguir");
-                    btnSeguir.setForeground(new Color(0, 149, 246));
+                String miUsuario = SesionActual.getInstancia().getUserActual().getUser();
+                boolean esParaSeguir = btnSeguir.getText().equals("Seguir");
+                String comando = esParaSeguir ? "SEGUIR_USUARIO" : "DEJAR_SEGUIR_USUARIO"; 
+                
+                try {
+                    PeticionRed req = new PeticionRed(comando, miUsuario, usuario.getUser()); 
+                    RespuestaRed res = ClienteInsta.getInstancia().enviarPeticion(req); 
+                    
+                    if (res != null && res.isExito()) { 
+                        if (esParaSeguir) {
+                            btnSeguir.setText("Siguiendo");
+                            btnSeguir.setForeground(Color.BLACK);
+                        } else {
+                            btnSeguir.setText("Seguir");
+                            btnSeguir.setForeground(new Color(0, 149, 246));
+                        }
+                        
+                       
+                        refrescar(); 
+                    } else {
+                        String msg = (res != null) ? res.getMensajeError() : "Error al procesar petición en el servidor"; 
+                        JOptionPane.showMessageDialog(PanelTimeline.this, msg, "Error", JOptionPane.ERROR_MESSAGE); 
+                    }
+                } catch (ArchivoCorruptoException ex) {
+                    System.err.println("Error de archivo al actualizar seguimiento: " + ex.getMessage());
+                    JOptionPane.showMessageDialog(PanelTimeline.this, "Error al leer los datos locales.", "Error de Archivo", JOptionPane.ERROR_MESSAGE);
+                } catch (Exception ex) {
+                    System.err.println("Error de red o comunicación: " + ex.getMessage());
+                    JOptionPane.showMessageDialog(PanelTimeline.this, "No se pudo conectar con el servidor.", "Error de Conexión", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
 
-       
         fila.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         fila.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (!btnSeguir.getBounds().contains(e.getPoint())) {
-                    navegador.mostrarPerfil(usuario.getUser());
+                    try {
+                        navegador.mostrarPerfil(usuario.getUser());
+                    } catch (Exception ex) {
+                        System.err.println("Error al cargar perfil: " + ex.getMessage());
+                    }
                 }
             }
         });
