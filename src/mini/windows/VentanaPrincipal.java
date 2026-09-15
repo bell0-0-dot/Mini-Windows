@@ -6,6 +6,7 @@ import base.Usuario;
 import editordetexto.GUIEditorTexto;
 import consola.*;
 import reproductorMusica.reproductorPanel;
+import Insta.PanelesInsta.JPanelPrincipal;
 
 import javax.swing.*;
 import javax.swing.event.InternalFrameAdapter;
@@ -66,7 +67,7 @@ public class VentanaPrincipal extends JFrame {
             {"Visor de imágenes", "IconoVisorImagenes.png", (Runnable) () -> abrirVisorImagenes(actual.getUser())},
             {"Consola", "IconoConsola.png", (Runnable) () -> abrirConsola(actual.getUser())},
             {"Reproductor", "IconoReproductorMusica.png", (Runnable) () -> abrirReproductorMusica(actual.getUser())},
-            {"INSTA+", "IconoInstaPlus.png", (Runnable) this::abrirInstaPlus}
+            {"INSTA+", "IconoInstaPlus.png", (Runnable) () -> abrirInstaPlus(actual.getUser())}
         };
 
         int x = 20, y = 20, ancho = 84, alto = 84, espacio = 8;
@@ -87,12 +88,18 @@ public class VentanaPrincipal extends JFrame {
         }
     }
 
-    private void abrirInstaPlus() {
-        try {
-            new Insta.LoginJFrame().setVisible(true);
+   private void abrirInstaPlus(String username) {
+        try{
+            mostrarOCrearVentana("insta:" + username,"Insta+",
+                RecursosUI.cargarIcono("IconoInstaPlus.png", 20, 20),
+                () -> new JPanelPrincipal(),
+                1000, 650
+            );
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Conectar INSTA+",
-                    "Próximamente", JOptionPane.INFORMATION_MESSAGE);
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, 
+                "Error al abrir Insta+: " + ex.getMessage(),
+                "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -139,6 +146,7 @@ public class VentanaPrincipal extends JFrame {
         agregarItem(menuHerramientas, "Visor de imágenes", e -> abrirVisorImagenes(actual.getUser()));
         agregarItem(menuHerramientas, "Consola de comandos", e -> abrirConsola(actual.getUser()));
         agregarItem(menuHerramientas, "Reproductor de música", e -> abrirReproductorMusica(actual.getUser()));
+        agregarItem(menuHerramientas, "Insta+", e -> abrirInstaPlus(actual.getUser()));
         barra.add(menuHerramientas);
 
         if (actual.getEsAdmin()) {
@@ -361,6 +369,7 @@ public class VentanaPrincipal extends JFrame {
             }
         }
     }
+    
 
     private void crearUsuarioDesdeAdmin() {
         String username = JOptionPane.showInputDialog(this, "Nuevo username:");

@@ -26,21 +26,33 @@ public class JPanelPrincipal extends JPanel implements NavegarInsta{
         this.setPreferredSize(new Dimension(800, 600));
         this.setLayout(cardLayout);
         
-        PanelLogin panelLogin = new PanelLogin(card -> mostrar(card));
+        PanelLogin panelLogin = new PanelLogin(card -> {
+            if ("login_exitoso".equals(card) || TARJETA_PRINCIPAL.equals(card)) {
+                alIniciarSesion(); 
+            } else {
+                mostrar(card);
+            }
+        });
         PanelRegistro panelregistro = new PanelRegistro(card -> mostrar(card));
-        timeline = new PanelTimeline(this);
-        panelApp=new PanelApp(this);
+        //timeline = new PanelTimeline(this);
+        //panelApp=new PanelApp(this);
         
          this.add(panelLogin, "login");
          this.add(panelregistro,"registro");
-         this.add(timeline, TARJETA_TIMELINE);
-         this.add(panelApp, TARJETA_PRINCIPAL);
+         //this.add(timeline, TARJETA_TIMELINE);
+         //this.add(panelApp, TARJETA_PRINCIPAL);
          
         
     }
-    public void mostrar(String nombreCard){
+    
+    public void mostrar(String nombreCard) {
         if (TARJETA_PRINCIPAL.equals(nombreCard)) {
-            panelApp.recargarSesion();
+            if (panelApp == null) {
+                alIniciarSesion(); 
+                return;
+            } else {
+                panelApp.recargarSesion();
+            }
         }
         cardLayout.show(this, nombreCard);
     }
@@ -82,19 +94,52 @@ public class JPanelPrincipal extends JPanel implements NavegarInsta{
        
     }
 
+    /*
     @Override
     public void cerrarSesion() {
         
         cardLayout.show(this, "login");
         
     }
-
+    */
+    
+    @Override
+    public void cerrarSesion() {
+        if (panelApp != null) {
+            this.remove(panelApp);
+            panelApp = null;
+        }
+        if (timeline != null) {
+            this.remove(timeline);
+            timeline = null;
+        }
+        
+        cardLayout.show(this, "login");
+    }
+    
+    /*
     @Override
     public void alIniciarSesion() {
        panelApp.recargarSesion();
        cardLayout.show(this, TARJETA_PRINCIPAL);
     }
+    */
+    @Override
+    public void alIniciarSesion() {
+        if (panelApp == null) {
+            panelApp = new PanelApp(this);
+            this.add(panelApp, TARJETA_PRINCIPAL);
+        } else {
+            panelApp.recargarSesion();
+        }
 
+        if (timeline == null) {
+            timeline = new PanelTimeline(this);
+            this.add(timeline, TARJETA_TIMELINE);
+        }
+
+        cardLayout.show(this, TARJETA_PRINCIPAL);
+    }
    
     
 }
