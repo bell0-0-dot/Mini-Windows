@@ -318,6 +318,16 @@ public class PanelInbox extends JPanel{
                 if (!agregados.contiene(usuarioSeguido)) {
                     if (ServicioArchivoInsta.buscarUsuario(usuarioSeguido) != null) {
                         agregados.insertarFinal(usuarioSeguido);
+                        
+                        ListaEnlazada<Mensaje> chat = ServicioArchivoInsta.obtenerChatEntre(miUsuario, usuarioSeguido);
+                        String ultimoTexto = "Haz clic para chatear";
+                        String tiempo = "";
+
+                        if (chat != null && chat.length() > 0) {
+                            Mensaje ultimoMsg = chat.obtenerEn(chat.length() - 1);
+                            ultimoTexto = ultimoMsg.getContenido();
+                            tiempo = ultimoMsg.getHoraFormato();
+                        }
                         agregarFilaContacto(usuarioSeguido, "Haz clic para chatear", "Ahora");
                     }
                 }
@@ -392,7 +402,7 @@ public class PanelInbox extends JPanel{
             @Override
             public void mouseClicked(MouseEvent e) {
                 contactoSeleccionado = username;
-
+                String miUsuario = SesionActual.getInstancia().getUserActual().getUser();
                
                 panelHeaderChatInfo.removeAll();
                 try {
@@ -405,7 +415,7 @@ public class PanelInbox extends JPanel{
 
                 panelHeaderChatInfo.revalidate();
                 panelHeaderChatInfo.repaint();
-
+                cargarHistorialChat(miUsuario, username);
                 cardLayoutDerecho.show(contenedorDerecho, "CHAT");
             }
 
@@ -431,10 +441,75 @@ public class PanelInbox extends JPanel{
         if (!texto.isEmpty() && !contactoSeleccionado.isEmpty()) {
             String miUsuario = SesionActual.getInstancia().getUserActual().getUser();
             Mensaje msg = new Mensaje(miUsuario, contactoSeleccionado, texto);
-            //server
+           
+            ServicioArchivoInsta.guardarMensaje(msg);
+            
             agregarBurbujaTexto(msg);
             campoTexto.setText("");
+            try {
+                cargarSeguidosComoChats();
+            } catch (ArchivoCorruptoException ex) {
+                ex.printStackTrace();
+            }
         }
+    }
+    private void enviarSticker(String rutaImagen) {
+    if (!contactoSeleccionado.isEmpty()) {
+        String miUsuario = SesionActual.getInstancia().getUserActual().getUser();
+        
+       
+        
+        
+        File archivoSticker = new File(rutaImagen);
+        String nombreSticker = archivoSticker.getName();
+
+        Mensaje msg = new Mensaje(
+                miUsuario,
+                contactoSeleccionado,
+                nombreSticker,
+                true
+        );
+
+        
+        agregarBurbujaImagen(msg, true);
+
+        ServicioArchivoInsta.guardarMensaje(msg);
+
+        try {
+            cargarSeguidosComoChats();
+        } catch (ArchivoCorruptoException ex) {
+            ex.printStackTrace();
+        }
+    }
+}
+    
+    
+    private void cargarHistorialChat(String miUsuario, String contacto) {
+        panelMensajes.removeAll();
+        
+       
+        ListaEnlazada<Mensaje> historial = ServicioArchivoInsta.obtenerChatEntre(miUsuario, contacto);
+        
+        if (historial != null) {
+             for (int i = 0; i < historial.length(); i++) {
+
+            Mensaje msg = historial.obtenerEn(i);
+
+            if (msg.isEsSticker()) {
+                agregarBurbujaImagen(msg,msg.getAutor().equalsIgnoreCase(miUsuario));
+            } else {
+                agregarBurbujaTexto(msg);
+            }
+        }
+        }
+        
+        panelMensajes.revalidate();
+        panelMensajes.repaint();
+        
+        
+        SwingUtilities.invokeLater(() -> 
+            panelMensajes.scrollRectToVisible(new Rectangle(0, panelMensajes.getHeight(), 1, 1))
+        );
     }
 
     
@@ -461,21 +536,45 @@ public class PanelInbox extends JPanel{
         SwingUtilities.invokeLater(() -> panelMensajes.scrollRectToVisible(new Rectangle(0, panelMensajes.getHeight(), 1, 1)));
     }
 
-    private void agregarBurbujaImagen(String rutaImagen, boolean esMio) {
-        JPanel fila = new JPanel(new FlowLayout(esMio ? FlowLayout.RIGHT : FlowLayout.LEFT, 10, 2));
+    private void agregarBurbujaImagen(Mensaje mensaje, boolean esMio) {
+        String rutaSticker = Rutas.rutaStickersPersonales(mensaje.getAutor())
+            + File.separator
+            + mensaje.getContenido().toString();
+
+        JPanel fila = new JPanel(
+                new FlowLayout(
+                        esMio ? FlowLayout.RIGHT : FlowLayout.LEFT,
+                        10,
+                        2
+                )
+        );
+
         fila.setBackground(Color.WHITE);
 
-        ImageIcon iconOriginal = new ImageIcon(rutaImagen);
-        Image imgEscalada = iconOriginal.getImage().getScaledInstance(120, 120, Image.SCALE_SMOOTH);
+        ImageIcon iconOriginal = new ImageIcon(rutaSticker);
+
+        Image imgEscalada = iconOriginal.getImage()
+                .getScaledInstance(120, 120, Image.SCALE_SMOOTH);
+
         JLabel lblSticker = new JLabel(new ImageIcon(imgEscalada));
 
         fila.add(lblSticker);
-        fila.setMaximumSize(new Dimension(Integer.MAX_VALUE, fila.getPreferredSize().height));
+
+        fila.setMaximumSize(
+                new Dimension(
+                        Integer.MAX_VALUE,
+                        fila.getPreferredSize().height
+                )
+        );
 
         panelMensajes.add(fila);
         panelMensajes.revalidate();
 
-        SwingUtilities.invokeLater(() -> panelMensajes.scrollRectToVisible(new Rectangle(0, panelMensajes.getHeight(), 1, 1)));
+        SwingUtilities.invokeLater(() ->
+            panelMensajes.scrollRectToVisible(
+                    new Rectangle(0, panelMensajes.getHeight(), 1, 1)
+            )
+        );
     }
 
     
@@ -527,7 +626,8 @@ public class PanelInbox extends JPanel{
 
                     btn.addActionListener(e -> {
                         popup.setVisible(false);
-                        agregarBurbujaImagen(f.getAbsolutePath(), true);
+                        enviarSticker(f.getAbsolutePath());
+                        
                     });
 
                     panelGrid.add(btn);

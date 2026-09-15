@@ -49,10 +49,24 @@ public class PanelLogin extends PanelAuth{
     private JPasswordField campoPassword;
     private JLabel labelRegistro;
     private JButton botonIniciarS;
-    
+    private ClienteInsta cliente;
 
     public PanelLogin(Consumer <String> navegar) {
         super(navegar);
+     
+
+        try {
+
+        cliente = new ClienteInsta();
+
+        } catch (Exception e) {
+
+        e.printStackTrace();
+
+        labelError.setText(
+            "No se pudo conectar con el servidor."
+        );
+        }
        
         setPreferredSize(new java.awt.Dimension(800, 600));
         setFocusable(true);
@@ -204,33 +218,88 @@ public class PanelLogin extends PanelAuth{
         String password = new String(passwordChars);
 
         try {
-            PeticionRed peticion = new PeticionRed("LOGIN", username, password);
-             RespuestaRed respuesta = ClienteInsta.getInstancia().enviarPeticion(peticion);
+
+        PeticionRed peticion =
+                new PeticionRed(
+                    "LOGIN",
+                    username,
+                    password
+                );
+
+        RespuestaRed respuesta =
+                cliente.enviarPeticion(
+                    peticion
+                );
 
         if (respuesta.isExito()) {
-            UsuarioInsta usuario = (UsuarioInsta) respuesta.getContenido();
-            SesionActual.getInstancia().iniciarSesion(usuario);
-            labelError.setText(" ");
-            System.out.println("Login exitoso: " + username);
+
+            UsuarioInsta usuario =
+                    (UsuarioInsta)
+                    respuesta.getContenido();
+
+            SesionActual
+                .getInstancia()
+                .iniciarSesion(usuario);
+            SesionActual
+                .getInstancia()
+                .setCliente(cliente);
+
+            System.out.println(
+                "Login exitoso: "
+                + usuario.getUser()
+            );
+
             limpiarCampos();
+
             navegar.accept("panelApp");
+
         } else {
-            
-            Object err = respuesta.getContenido();
-            if (err instanceof UsuarioInexistenteException) {
-                labelError.setText("El usuario no existe.");
-            } else if (err instanceof PasswordIncorrectoException) {
-                labelError.setText("Contraseña incorrecta.");
-            } else if (err instanceof CuentaDesactivadaException) {
-                labelError.setText("Esta cuenta está desactivada.");
+
+            Object error =
+                    respuesta.getContenido();
+
+            if (error instanceof UsuarioInexistenteException) {
+
+                labelError.setText(
+                    "El usuario no existe."
+                );
+
+            } else if (
+                error instanceof PasswordIncorrectoException) {
+
+                labelError.setText(
+                    "Contraseña incorrecta."
+                );
+
+            } else if (
+                error instanceof CuentaDesactivadaException) {
+
+                labelError.setText(
+                    "Esta cuenta está desactivada."
+                );
+
             } else {
-                labelError.setText("Error del sistema. Intenta de nuevo.");
+
+                labelError.setText(
+                    respuesta.getMensajeError()
+                );
             }
         }
-        } catch (Exception ex) {
-            labelError.setText("Error de conexión con el servidor.");
-        } finally {
-            java.util.Arrays.fill(passwordChars, ' ');
+
+    } catch (Exception e) {
+
+        e.printStackTrace();
+
+        labelError.setText(
+            "Error de conexión con el servidor."
+        );
+
+    } finally {
+
+        java.util.Arrays.fill(
+            passwordChars,
+            ' '
+        );
     }
 }
     @Override

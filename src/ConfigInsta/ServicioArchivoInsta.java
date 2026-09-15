@@ -12,6 +12,7 @@ import Insta.UsuarioInsta;
 import base.Nodo;
 import java.io.IOException;
 import Insta.Genero;
+import Insta.Mensaje;
 import java.io.File;
 import Insta.Publicacion;
 
@@ -92,6 +93,16 @@ public class ServicioArchivoInsta {
        if(!carpetaStickers.exists()&&!carpetaStickers.mkdirs()){
            throw new IOException("Error al crear la carpeta del usuario "+username);
        }
+       
+       File archivoInbox = new File(Rutas.rutaInbox(username));
+        if (!archivoInbox.exists()) {
+      
+        try {
+            ArchivoUtil.guardarLista(Rutas.rutaInbox(username), new ListaEnlazada<Mensaje>());
+        } catch (Exception e) {
+            throw new IOException("Error al crear el archivo inbox.ins para el usuario: " + username, e);
+        }
+    }
        
        
        
@@ -232,6 +243,52 @@ public class ServicioArchivoInsta {
 
     guardarLista(lista);
 }
+    
+    //servidor mensajes
+    
+    public static void guardarMensaje(Mensaje mensaje) {
+    try {
+       
+        guardarMensajeEnInbox(mensaje.getAutor(), mensaje);
+        
+        
+        guardarMensajeEnInbox(mensaje.getDestinatario(), mensaje);
+    } catch (Exception e) {
+        System.err.println("Error al guardar mensaje: " + e.getMessage());
+    }
+}
+    private static void guardarMensajeEnInbox(String username, Mensaje mensaje) throws Exception {
+        String ruta = Rutas.rutaInbox(username);
+        ListaEnlazada<Mensaje> listaInbox = ArchivoUtil.leerLista(ruta);
+        if (listaInbox == null) {
+            listaInbox = new ListaEnlazada<>();
+        }
+        listaInbox.insertarFinal(mensaje);
+        ArchivoUtil.guardarLista(ruta, listaInbox);
+}
+
+    public static ListaEnlazada<Mensaje> obtenerChatEntre(String user1, String user2) {
+        ListaEnlazada<Mensaje> chatFiltrado = new ListaEnlazada<>();
+        try {
+            String rutaInbox = Rutas.rutaInbox(user1);
+            ListaEnlazada<Mensaje> historial = ArchivoUtil.leerLista(rutaInbox);
+
+            if (historial != null) {
+                for (int i = 0; i < historial.length(); i++) {
+                    Mensaje m = historial.obtenerEn(i);
+                    boolean de1a2 = m.getAutor().equalsIgnoreCase(user1) && m.getDestinatario().equalsIgnoreCase(user2);
+                    boolean de2a1 = m.getAutor().equalsIgnoreCase(user2) && m.getDestinatario().equalsIgnoreCase(user1);
+
+                    if (de1a2 || de2a1) {
+                        chatFiltrado.insertarFinal(m);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al leer inbox.ins de " + user1 + ": " + e.getMessage());
+        }
+        return chatFiltrado;
+    }
     
 }
     

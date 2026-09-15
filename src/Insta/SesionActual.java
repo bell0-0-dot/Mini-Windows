@@ -4,6 +4,8 @@
  */
 package Insta;
 
+import Servidor.ClienteInsta;
+
 /**
  *
  * @author vasqu
@@ -12,9 +14,20 @@ public class SesionActual {
     
     private static SesionActual Instancia;
     private UsuarioInsta userActual;
+    private ClienteInsta cliente;
 
     private SesionActual() {
     }
+
+    public ClienteInsta getCliente() {
+        return cliente;
+    }
+
+    public void setCliente(ClienteInsta cliente) {
+        this.cliente = cliente;
+    }
+    
+    
     
     public static SesionActual getInstancia(){
         if(Instancia==null){
