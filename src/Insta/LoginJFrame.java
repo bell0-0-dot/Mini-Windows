@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -33,11 +34,11 @@ import javax.swing.UIManager;
  * @author vasqu
  */
 public class LoginJFrame extends JFrame{
-
+    static Image iconoVentana;
     public LoginJFrame() {
         this.setTitle("Instagram");
         try {
-        Image iconoVentana = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/Insta/Imagenes/LogoBarra.png"));
+         iconoVentana = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/Insta/Imagenes/LogoBarra.png"));
         this.setIconImage(iconoVentana);
     } catch (Exception e) {
         System.err.println("No se pudo cargar el icono de la ventana: " + e.getMessage());
@@ -52,14 +53,17 @@ public class LoginJFrame extends JFrame{
 
     public static void main(String[] args) throws ArchivoCorruptoException, IOException, UsernameDuplicadoException {
         
-        
+       
         UsuarioInsta usuario = ServicioArchivoInsta.buscarUsuario("Daya_0_0");
         
         SesionActual.getInstancia().iniciarSesion(usuario);
 
-        JFrame frame = new JFrame("INSTA+ (prueba)");
+        JFrame frame = new JFrame("Instagram");
+        Image icono = new ImageIcon(LoginJFrame.class.getResource("/Insta/Imagenes/LogoBarra.png")).getImage();
+        frame.setIconImage(icono);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setContentPane(new JPanelPrincipal());
+        
         frame.setSize(1000, 700);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
@@ -111,7 +115,7 @@ public class LoginJFrame extends JFrame{
             null                                        // rutaSticker (o "" si no usas)
         );
 
-        // 4. Agregar a la lista y guardar en el archivo binario (.ins)
+     
         publicaciones.insertarFinal(nuevaPost);
         ArchivoUtil.guardarLista(rutaArchivoInsta, publicaciones);
 
