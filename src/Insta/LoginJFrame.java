@@ -55,9 +55,10 @@ public class LoginJFrame extends JFrame{
         
        
         UsuarioInsta usuario = ServicioArchivoInsta.buscarUsuario("Daya_0_0");
-        
-        SesionActual.getInstancia().iniciarSesion(usuario);
+         
+         SesionActual.getInstancia().iniciarSesion(usuario);
 
+        
         JFrame frame = new JFrame("Instagram");
         Image icono = new ImageIcon(LoginJFrame.class.getResource("/Insta/Imagenes/LogoBarra.png")).getImage();
         frame.setIconImage(icono);
