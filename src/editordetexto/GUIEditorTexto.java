@@ -316,9 +316,48 @@ public class GUIEditorTexto extends JPanel {
         labelArchivoActual.setText("Documento sin guardar");
     }
 
+    public void abrirArchivoExterno(File archivo) {
+        if (archivo == null || !archivo.exists()) return;
+
+        String nombre = archivo.getName().toLowerCase();
+        if (nombre.endsWith(Constantes.EXTENSION) || nombre.endsWith(Constantes.EXTENSION_LEGADO)) {
+            try {
+                Documento doc = lectorBinario.abrir(archivo);
+                renderizarDocumento(doc);
+                archivoActual = archivo;
+                labelArchivoActual.setText(archivoActual.getName());
+            } catch (ExtensionInvalidaException ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Error de Archivo", JOptionPane.ERROR_MESSAGE);
+            } catch (ArchivoCorruptoException | ArchivoTruncadoException ex) {
+                cargarTextoPlano(archivo);
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this, "Error de E/S al abrir el archivo: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } else {
+            cargarTextoPlano(archivo);
+        }
+    }
+
+    private void cargarTextoPlano(File archivo) {
+        try (java.io.BufferedReader lector = new java.io.BufferedReader(new java.io.FileReader(archivo))) {
+            StringBuilder contenido = new StringBuilder();
+            String linea;
+            while ((linea = lector.readLine()) != null) {
+                contenido.append(linea).append("\n");
+            }
+            areaTexto.setText(contenido.toString());
+            paneActivo = areaTexto;
+            archivoActual = archivo;
+            labelArchivoActual.setText(archivoActual.getName() + " (sin formato)");
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, "No se pudo abrir el archivo: " + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     private void abrirArchivo() {
         JFileChooser escogerArchivo = crearSelectorArchivos();
-        escogerArchivo.setFileFilter(new FileNameExtensionFilter("Documentos .edt", "edt"));
+        escogerArchivo.setFileFilter(new FileNameExtensionFilter("Documentos de texto (.txt)", "txt", "edt"));
 
         if (escogerArchivo.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             File archivo = escogerArchivo.getSelectedFile();
@@ -330,8 +369,10 @@ public class GUIEditorTexto extends JPanel {
                 labelArchivoActual.setText(archivoActual.getName());
 
                 JOptionPane.showMessageDialog(this, "Archivo cargado con éxito", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-            } catch (ExtensionInvalidaException | ArchivoCorruptoException | ArchivoTruncadoException ex) {
+            } catch (ExtensionInvalidaException ex) {
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "Error de Archivo", JOptionPane.ERROR_MESSAGE);
+            } catch (ArchivoCorruptoException | ArchivoTruncadoException ex) {
+                cargarTextoPlano(archivo);
             } catch (IOException ex) {
                 JOptionPane.showMessageDialog(this, "Error de E/S al abrir el archivo: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -348,7 +389,7 @@ public class GUIEditorTexto extends JPanel {
 
     private void guardarComoArchivo() {
         JFileChooser escogerArchivo = crearSelectorArchivos();
-        escogerArchivo.setFileFilter(new FileNameExtensionFilter("Documentos .edt", "edt"));
+        escogerArchivo.setFileFilter(new FileNameExtensionFilter("Documentos de texto (.txt)", "txt"));
 
         if (escogerArchivo.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
             File archivo = escogerArchivo.getSelectedFile();

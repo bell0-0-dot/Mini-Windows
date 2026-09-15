@@ -11,7 +11,8 @@ package persistencia;
 public class Constantes {
     public static final String ID = "EDT1";
     public static final int VERSION_ACTUAL = 1;
-    public static final String EXTENSION = ".edt";
+    public static final String EXTENSION = ".txt";
+    public static final String EXTENSION_LEGADO = ".edt";
 
     public static final byte TIPO_FRAGMENTO = 0;
     public static final byte TIPO_TABLA = 1;

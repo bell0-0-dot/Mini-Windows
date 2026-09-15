@@ -23,18 +23,24 @@ public class EdtRead {
         if (!archivo.exists()) {
             throw new ArchivoCorruptoException("El archivo no existe: " + archivo.getPath());
         }
-        if (!archivo.getName().toLowerCase().endsWith(Constantes.EXTENSION)) {
+        String nombreEnMinusculas = archivo.getName().toLowerCase();
+        if (!nombreEnMinusculas.endsWith(Constantes.EXTENSION)
+                && !nombreEnMinusculas.endsWith(Constantes.EXTENSION_LEGADO)) {
             throw new ExtensionInvalidaException(
                     "El archivo debe tener extensión " + Constantes.EXTENSION);
         }
 
         Documento doc = new Documento();
 
+        if (archivo.length() == 0) {
+            return doc;
+        }
+
         try (RandomAccessFile raf = new RandomAccessFile(archivo, "r")) {
             String magic = raf.readUTF();
             if (!magic.equals(Constantes.ID)) {
                 throw new ArchivoCorruptoException(
-                "Cabecera inválida: el archivo no es un .edt reconocible");
+                "Cabecera inválida: el archivo no es un documento de Mini-Windows reconocible");
             }
 
             int version = raf.readInt();
@@ -61,6 +67,9 @@ public class EdtRead {
 
         } catch (EOFException e) {
             throw new ArchivoTruncadoException("El archivo está incompleto o fue truncado a la mitad");
+        } catch (IOException e) {
+            throw new ArchivoCorruptoException(
+                    "El archivo no tiene el formato esperado por el editor: " + e.getMessage());
         }
 
         return doc;

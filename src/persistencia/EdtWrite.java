@@ -18,7 +18,9 @@ import java.util.ArrayList;
  */
 public class EdtWrite {
     public void guardar(Documento doc, File archivo) throws IOException, ExtensionInvalidaException{
-        if (!archivo.getName().toLowerCase().endsWith(Constantes.EXTENSION)) {
+        String nombreEnMinusculas = archivo.getName().toLowerCase();
+        if (!nombreEnMinusculas.endsWith(Constantes.EXTENSION)
+                && !nombreEnMinusculas.endsWith(Constantes.EXTENSION_LEGADO)) {
             throw new ExtensionInvalidaException(
                     "El archivo debe tener extensión " + Constantes.EXTENSION);
         }
