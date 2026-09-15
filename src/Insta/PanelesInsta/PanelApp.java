@@ -100,7 +100,9 @@ public class PanelApp extends JPanel implements NavegarInsta{
     }
 
     @Override
-    public void mostrarInbox() { }
+    public void mostrarInbox() { 
+        cardLayout.show(contenedorTarjetas, TARJETA_INBOX);
+    }
 
     @Override
     public void mostrarNotificaciones() { }
