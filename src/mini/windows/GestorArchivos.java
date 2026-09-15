@@ -5,9 +5,11 @@
 package mini.windows;
 
 import Excepciones.ArchivoCorruptoException;
+import Excepciones.PasswordInvalidaException;
 import base.ArchivoUtil;
 import base.ListaEnlazada;
 import base.Usuario;
+import base.ValidadorPassword;
 import Excepciones.UsernameDuplicadoException;
 
 import java.io.File;
@@ -42,8 +44,10 @@ public class GestorArchivos {
     }
  
     public static void crearUsuario(String username, String password, boolean esAdmin)
-            throws UsernameDuplicadoException, IOException, ArchivoCorruptoException {
- 
+            throws UsernameDuplicadoException, IOException, ArchivoCorruptoException, PasswordInvalidaException {
+
+        ValidadorPassword.validar(password);
+
         ListaEnlazada<Usuario> usuarios = ArchivoUtil.leerLista(RUTA_USUARIOS);
  
         if (existeUsername(usuarios, username)) {

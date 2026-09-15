@@ -239,6 +239,12 @@ public class ExploradorPanel extends JPanel {
         botonNuevoArchivo.addActionListener(e -> crearArchivo());
         barra.add(botonNuevoArchivo);
 
+        JButton botonImportar = new JButton("Importar archivo...");
+        botonImportar.addActionListener(e -> importarArchivos());
+        barra.add(botonImportar);
+
+        barra.addSeparator();
+
         JButton botonRenombrar = new JButton("Renombrar");
         botonRenombrar.addActionListener(e -> renombrarSeleccionado());
         barra.add(botonRenombrar);
@@ -317,6 +323,41 @@ public class ExploradorPanel extends JPanel {
                     "Error", JOptionPane.ERROR_MESSAGE);
         }
         refrescar();
+    }
+
+    private void importarArchivos() {
+        JFileChooser selector = new JFileChooser();
+        selector.setDialogTitle("Importar desde tu computadora");
+        selector.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        selector.setMultiSelectionEnabled(true);
+
+        if (selector.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) return;
+
+        File[] elegidos = selector.getSelectedFiles();
+        if (elegidos.length == 0) return;
+
+        File carpetaDestino = obtenerCarpetaDeTrabajo();
+        int importados = 0;
+        StringBuilder errores = new StringBuilder();
+
+        for (File origen : elegidos) {
+            try {
+                GestorArchivosFS.copiar(origen, carpetaDestino);
+                importados++;
+            } catch (IOException ex) {
+                errores.append("- ").append(origen.getName()).append(": ").append(ex.getMessage()).append("\n");
+            }
+        }
+
+        refrescar();
+
+        String resumen = importados + " elemento(s) importado(s) a \"" + carpetaDestino.getName() + "\".";
+        if (errores.length() > 0) {
+            JOptionPane.showMessageDialog(this, resumen + "\n\nNo se pudieron importar:\n" + errores,
+                    "Importar archivos", JOptionPane.WARNING_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this, resumen, "Importar archivos", JOptionPane.INFORMATION_MESSAGE);
+        }
     }
 
     private void renombrarSeleccionado() {
