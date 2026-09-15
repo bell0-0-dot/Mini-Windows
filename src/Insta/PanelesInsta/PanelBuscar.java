@@ -9,6 +9,9 @@ import Excepciones.ArchivoCorruptoException;
 import Insta.NavegarInsta;
 import Insta.Publicacion;
 import Insta.UsuarioInsta;
+import Servidor.ClienteInsta;
+import Servidor.PeticionRed;
+import Servidor.RespuestaRed;
 import base.ListaEnlazada;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -154,34 +157,57 @@ public class PanelBuscar  extends JPanel{
                 mostrarSugeridos();
             } else if (texto.startsWith("#")) {
                 String tagLimpio = texto.substring(1).toLowerCase();
-                ListaEnlazada<Publicacion> publicaciones = ServicioArchivoInsta.buscarPorHashtag(tagLimpio);
-                
-                if (publicaciones.estaVacia()) {
-                JLabel lblVacio = new JLabel("No se encontraron publicaciones con " + texto);
-                lblVacio.setAlignmentX(Component.CENTER_ALIGNMENT);
-                lblVacio.setForeground(new Color(142, 142, 142));
-                contenedorResultados.add(lblVacio);
+
+               
+                PeticionRed req = new PeticionRed("BUSCAR_HASHTAG", tagLimpio);
+                RespuestaRed res = ClienteInsta.getInstancia().enviarPeticion(req);
+
+                ListaEnlazada<Publicacion> publicaciones;
+
+                if (res != null && res.isExito() && res.getContenido() instanceof ListaEnlazada) {
+                    publicaciones = (ListaEnlazada<Publicacion>) res.getContenido();
+                } else {
+                    
+                    publicaciones = ServicioArchivoInsta.buscarPorHashtag(tagLimpio);
+                }
+
+                if (publicaciones == null || publicaciones.estaVacia()) {
+                    JLabel lblVacio = new JLabel("No se encontraron publicaciones con " + texto);
+                    lblVacio.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    lblVacio.setForeground(new Color(142, 142, 142));
+                    contenedorResultados.add(lblVacio);
+                } else {
+                    JPanel panelGrilla = new JPanel(new GridLayout(0, 3, 4, 4));
+                    panelGrilla.setBackground(Color.WHITE);
+                    panelGrilla.setMaximumSize(new Dimension(600, Integer.MAX_VALUE));
+                    panelGrilla.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+                    for (int i = 0; i < publicaciones.length(); i++) {
+                        Publicacion p = publicaciones.obtenerEn(i);
+                        panelGrilla.add(construirMiniaturaGrid(p));
+                    }
+
+                    contenedorResultados.add(panelGrilla);
+                }
             } else {
                
-                JPanel panelGrilla = new JPanel(new GridLayout(0, 3, 4, 4));
-                panelGrilla.setBackground(Color.WHITE);
-                panelGrilla.setMaximumSize(new Dimension(600, Integer.MAX_VALUE));
-                panelGrilla.setAlignmentX(Component.CENTER_ALIGNMENT);
+                PeticionRed req = new PeticionRed("BUSCAR_USUARIO", texto);
+                RespuestaRed res = ClienteInsta.getInstancia().enviarPeticion(req);
 
-                for (int i = 0; i < publicaciones.length(); i++) {
-                    Publicacion p = publicaciones.obtenerEn(i);
-                    panelGrilla.add(construirMiniaturaGrid(p));
+                ListaEnlazada<UsuarioInsta> usuarios;
+                if (res != null && res.isExito() && res.getContenido() instanceof ListaEnlazada) {
+                    usuarios = (ListaEnlazada<UsuarioInsta>) res.getContenido();
+                } else {
+                    usuarios = ServicioArchivoInsta.buscarUsuariosParcial(texto);
                 }
-                
-                contenedorResultados.add(panelGrilla);
-            }
-            } else {
-                ListaEnlazada<UsuarioInsta> usuarios = ServicioArchivoInsta.buscarUsuariosParcial(texto);
-                for (int i = 0; i < usuarios.length(); i++) {
-                    contenedorResultados.add(construirFilaUsuario(usuarios.obtenerEn(i)));
+
+                if (usuarios != null) {
+                    for (int i = 0; i < usuarios.length(); i++) {
+                        contenedorResultados.add(construirFilaUsuario(usuarios.obtenerEn(i)));
+                    }
                 }
             }
-        } catch (ArchivoCorruptoException e) {
+        } catch (Exception e) {
             contenedorResultados.add(new JLabel("No se pudo completar la búsqueda."));
         }
 

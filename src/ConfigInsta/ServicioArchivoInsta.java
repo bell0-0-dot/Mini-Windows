@@ -234,17 +234,31 @@ public class ServicioArchivoInsta {
         ListaEnlazada<UsuarioInsta> usuarios = cargarLista();
 
         for (int i = 0; i < usuarios.length(); i++) {
-            String username = usuarios.obtenerEn(i).getUser();
-            ListaEnlazada<Publicacion> publicaciones = ArchivoUtil.leerLista(Rutas.rutaInsta(username));
+            UsuarioInsta u = usuarios.obtenerEn(i);
+            String rutaInsta = Rutas.rutaInsta(u.getUser());
 
-            for (int j = 0; j < publicaciones.length(); j++) {
-                Publicacion p = publicaciones.obtenerEn(j);
-                if (p.getHashtags().contiene(hashtag)) {
-                    resultado.insertarFinal(p);
+        
+            ListaEnlazada<Publicacion> publicacionesUsuario = ArchivoUtil.leerLista(rutaInsta);
+
+            if (publicacionesUsuario != null) {
+            for (int j = 0; j < publicacionesUsuario.length(); j++) {
+                Publicacion p = publicacionesUsuario.obtenerEn(j);
+
+               
+                if (p.getHashtags() != null) {
+                    for (int k = 0; k < p.getHashtags().length(); k++) {
+                        String h = p.getHashtags().obtenerEn(k).toLowerCase().replace("#", "");
+                        if (h.contains(hashtag)) {
+                            resultado.insertarFinal(p);
+                            break; 
+                        }
+                    }
                 }
             }
         }
-        return ordenarPorFechaDesc(resultado);
+    }
+
+    return resultado;
     }
     
     public static ListaEnlazada<UsuarioInsta> buscarUsuariosParcial(String texto) throws ArchivoCorruptoException {
