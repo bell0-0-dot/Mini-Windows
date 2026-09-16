@@ -310,7 +310,7 @@ public class PanelPublicacion extends JPanel{
             String username = (String) atributos.getAttribute(CLAVE_MENCION);
             
             if (username != null) {
-                navegador.mostrarPerfil(username);
+                //navegador.mostrarPerfil(username);
             }
         }
     });
@@ -322,7 +322,7 @@ public class PanelPublicacion extends JPanel{
         
     private void abrirDetalleModal() {
         Frame framePadre = (Frame) SwingUtilities.getWindowAncestor(this);
-        PaneldetallePublicacion modal = new PaneldetallePublicacion(framePadre, publicacion, navegador);
+        PanelDetallePublicacion modal = new PanelDetallePublicacion(framePadre, publicacion, navegador);
         modal.setVisible(true);
 }
     

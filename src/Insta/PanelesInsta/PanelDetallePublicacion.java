@@ -55,7 +55,7 @@ import javax.swing.text.StyledDocument;
  *
  * @author vasqu
  */
-public class PaneldetallePublicacion extends JDialog{
+public class PanelDetallePublicacion extends JDialog{
     private Publicacion publicacion;
     private NavegarInsta navegador;
     private String usuarioActual;
@@ -71,7 +71,7 @@ public class PaneldetallePublicacion extends JDialog{
     private ImageIcon iconoLikeContorno;
     private ImageIcon iconoComentario;
 
-    public PaneldetallePublicacion(Frame parent, Publicacion publicacion, NavegarInsta navegador) {
+    public PanelDetallePublicacion(Frame parent, Publicacion publicacion, NavegarInsta navegador) {
         super(parent, true);
         this.publicacion = publicacion;
         this.navegador = navegador;

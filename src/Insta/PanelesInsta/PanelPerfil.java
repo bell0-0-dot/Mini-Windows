@@ -19,10 +19,14 @@ import base.ListaEnlazada;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.GridLayout;
 import java.awt.Image;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.nio.file.Paths;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -34,6 +38,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -193,6 +198,17 @@ public class PanelPerfil extends JPanel{
             
             JLabel lblFoto = new JLabel(new ImageIcon(escalada));
             lblFoto.setPreferredSize(new Dimension(200, 200));
+            lblFoto.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            lblFoto.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    Frame framePadre = (Frame) SwingUtilities.getWindowAncestor(PanelPerfil.this);
+                    PanelDetallePublicacion modal = new PanelDetallePublicacion(framePadre, p, navegador);
+                    modal.setVisible(true);
+                }
+            });
+            
+            
             grid.add(lblFoto);
         }
 

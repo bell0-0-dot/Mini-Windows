@@ -20,6 +20,7 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
@@ -37,6 +38,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -321,13 +323,22 @@ public class PanelBuscar  extends JPanel{
                 Image img = icono.getImage().getScaledInstance(200, 200, Image.SCALE_SMOOTH);
                 lblFoto.setIcon(new ImageIcon(img));
             } else {
-                lblFoto.setText("📷 (No encontrada)");
+                lblFoto.setText(" (No encontrada)");
                 lblFoto.setFont(lblFoto.getFont().deriveFont(11f));
                 lblFoto.setForeground(Color.GRAY);
             }
         } else {
             lblFoto.setText("📷");
         }
+        
+         panelImagen.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                Frame framePadre = (Frame) SwingUtilities.getWindowAncestor(PanelBuscar.this);
+                PanelDetallePublicacion modal = new PanelDetallePublicacion(framePadre, p, navegador);
+                modal.setVisible(true);
+            }
+        });
 
         panelImagen.add(lblFoto, BorderLayout.CENTER);
 
@@ -335,7 +346,7 @@ public class PanelBuscar  extends JPanel{
         panelImagen.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                navegador.mostrarPerfil(p.getAutor());
+                //navegador.mostrarPerfil(p.getAutor());
             }
         });
 

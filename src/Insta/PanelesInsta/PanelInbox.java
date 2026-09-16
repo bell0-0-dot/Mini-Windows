@@ -30,6 +30,8 @@ import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
@@ -52,6 +54,7 @@ import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
@@ -69,6 +72,8 @@ public class PanelInbox extends JPanel{
     private JLabel labelChatActivo;
     private JPanel panelHeaderChatInfo; 
     private String contactoSeleccionado = "";
+    private int ultimoConteoMensajes = -1;
+    private Timer timerRefrescoChat;
 
     public PanelInbox(NavegarInsta navegador) throws ArchivoCorruptoException {
         this.navegador = navegador;
@@ -76,6 +81,25 @@ public class PanelInbox extends JPanel{
         this.setBackground(Color.WHITE);
 
         inicializarInterfaz();
+        
+         timerRefrescoChat = new Timer(3000, e -> refrescarChatEnTiempoReal());
+        
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent e) {
+                if (!contactoSeleccionado.isEmpty()) {
+                    timerRefrescoChat.start();
+                }
+            }
+
+            @Override
+            public void componentHidden(ComponentEvent e) {
+                timerRefrescoChat.stop();
+            }
+        });
+        
+        
+        
         try{
             cargarSeguidosComoChats();
         }catch(ArchivoCorruptoException e){
@@ -229,6 +253,25 @@ public class PanelInbox extends JPanel{
         return panel;
     }
 
+    
+    private void refrescarChatEnTiempoReal() {
+        if (contactoSeleccionado.isEmpty() || SesionActual.getInstancia().getUserActual() == null) {
+            return;
+        }
+
+        String miUsuario = SesionActual.getInstancia().getUserActual().getUser();
+        ListaEnlazada<Mensaje> historial = ServicioArchivoInsta.obtenerChatEntre(miUsuario, contactoSeleccionado);
+
+        int conteoActual = (historial != null) ? historial.length() : 0;
+
+      
+        if (conteoActual != ultimoConteoMensajes) {
+            cargarHistorialChat(miUsuario, contactoSeleccionado);
+            try {
+                cargarSeguidosComoChats();
+            } catch (ArchivoCorruptoException ex) { }
+        }
+    }
     private JPanel crearPantallaChat() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
@@ -491,13 +534,15 @@ public class PanelInbox extends JPanel{
         ListaEnlazada<Mensaje> historial = ServicioArchivoInsta.obtenerChatEntre(miUsuario, contacto);
         
         if (historial != null) {
+            ultimoConteoMensajes = historial.length();
              for (int i = 0; i < historial.length(); i++) {
 
-            Mensaje msg = historial.obtenerEn(i);
+                Mensaje msg = historial.obtenerEn(i);
 
             if (msg.isEsSticker()) {
                 agregarBurbujaImagen(msg,msg.getAutor().equalsIgnoreCase(miUsuario));
             } else {
+                ultimoConteoMensajes = 0;
                 agregarBurbujaTexto(msg);
             }
         }
@@ -537,43 +582,40 @@ public class PanelInbox extends JPanel{
     }
 
     private void agregarBurbujaImagen(Mensaje mensaje, boolean esMio) {
-        String rutaSticker = Rutas.rutaStickersPersonales(mensaje.getAutor())
-            + File.separator
-            + mensaje.getContenido().toString();
-
-        JPanel fila = new JPanel(
-                new FlowLayout(
-                        esMio ? FlowLayout.RIGHT : FlowLayout.LEFT,
-                        10,
-                        2
+        String rutaSticker = Rutas.rutaStickersPersonales(mensaje.getAutor())+ File.separator+ mensaje.getContenido().toString();
+        File archivoImg = new File(rutaSticker);
+        
+        if (!archivoImg.exists()) {
+            String rutaGlobal = Rutas.RUTA_STICKERS_GLOBALES + File.separator + mensaje.getContenido();
+            archivoImg = new File(rutaGlobal);
+        }
+        
+        JPanel fila = new JPanel(new FlowLayout(esMio ? FlowLayout.RIGHT : FlowLayout.LEFT,10,2
                 )
         );
-
         fila.setBackground(Color.WHITE);
+        
+        
 
-        ImageIcon iconOriginal = new ImageIcon(rutaSticker);
+        if (archivoImg.exists()) {
+            ImageIcon iconOriginal = new ImageIcon(archivoImg.getAbsolutePath());
+            Image imgEscalada = iconOriginal.getImage().getScaledInstance(120, 120, Image.SCALE_SMOOTH);
+            JLabel lblSticker = new JLabel(new ImageIcon(imgEscalada));
+            fila.add(lblSticker);
+        } else {
+            JLabel lblError = new JLabel("Sticker no encontrado");
+            lblError.setFont(new Font("SansSerif", Font.ITALIC, 11));
+            lblError.setForeground(Color.GRAY);
+            fila.add(lblError);
+        }
 
-        Image imgEscalada = iconOriginal.getImage()
-                .getScaledInstance(120, 120, Image.SCALE_SMOOTH);
-
-        JLabel lblSticker = new JLabel(new ImageIcon(imgEscalada));
-
-        fila.add(lblSticker);
-
-        fila.setMaximumSize(
-                new Dimension(
-                        Integer.MAX_VALUE,
-                        fila.getPreferredSize().height
-                )
-        );
+        fila.setMaximumSize(new Dimension(Integer.MAX_VALUE, fila.getPreferredSize().height));
 
         panelMensajes.add(fila);
         panelMensajes.revalidate();
 
         SwingUtilities.invokeLater(() ->
-            panelMensajes.scrollRectToVisible(
-                    new Rectangle(0, panelMensajes.getHeight(), 1, 1)
-            )
+            panelMensajes.scrollRectToVisible(new Rectangle(0, panelMensajes.getHeight(), 1, 1))
         );
     }
 
@@ -711,4 +753,6 @@ public class PanelInbox extends JPanel{
             }
         }
         }
+    
+    
 }
