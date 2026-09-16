@@ -408,6 +408,27 @@ public class ServicioArchivoInsta {
         ListaEnlazada<Notificacion> lista = ArchivoUtil.leerLista(Rutas.rutaNotificaciones(username));
         return lista != null ? lista : new ListaEnlazada<>();
     }
+    //contenido pre-cargado
+    
+    public static ListaEnlazada<Publicacion> obtenerPublicacionesDeCuentas(String[] usernames) throws ArchivoCorruptoException {
+        ListaEnlazada<Publicacion> resultado = new ListaEnlazada<>();
+
+        for (String username : usernames) {
+            if (buscarUsuario(username) == null){
+                continue;
+            }  
+
+            ListaEnlazada<Publicacion> publicaciones = ArchivoUtil.leerLista(Rutas.rutaInsta(username));
+            for (int i = 0; i < publicaciones.length(); i++) {
+                resultado.insertarFinal(publicaciones.obtenerEn(i));
+            }
+        }
+
+    return ordenarPorFechaDesc(resultado);
+}
+    
+    
+    
 }
     
 

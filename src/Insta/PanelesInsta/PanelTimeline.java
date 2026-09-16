@@ -32,6 +32,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 /**
  *
  * @author vasqu
@@ -40,7 +41,7 @@ public class PanelTimeline extends JPanel{
     private JPanel contenedorPublicaciones;
     private JPanel panelSugerencias;
     private NavegarInsta navegador;
-
+    private static final String [] CUENTAS_RESPALDO={"NoticiasHN","TodoDeportesHn","ClimaHN"};
     public PanelTimeline(NavegarInsta navegador) {
        this.navegador=navegador;
        setLayout(new BorderLayout());
@@ -118,7 +119,7 @@ public class PanelTimeline extends JPanel{
             PeticionRed reqFeed = new PeticionRed("OBTENER_TIMELINE", username, null);
             RespuestaRed resFeed = ClienteInsta.getInstancia().enviarPeticion(reqFeed); 
 
-            ListaEnlazada<Publicacion> publicaciones;
+             ListaEnlazada<Publicacion> publicaciones;
 
             if (resFeed != null && resFeed.isExito() && resFeed.getContenido() instanceof ListaEnlazada) { 
                 publicaciones = (ListaEnlazada<Publicacion>) resFeed.getContenido();
@@ -127,6 +128,15 @@ public class PanelTimeline extends JPanel{
                 publicaciones = new ServicioArchivoInsta().obtenerTimeline(username);
             }
 
+            if (publicaciones == null || publicaciones.estaVacia()) {
+                try {
+                    String[] cuentasRespaldo = { "NoticiasHn", "DeportesHn", "ClimaHn" };
+                    publicaciones = ServicioArchivoInsta.obtenerPublicacionesDeCuentas(cuentasRespaldo);
+                } catch (ArchivoCorruptoException ex) {
+                    publicaciones = new ListaEnlazada<>();
+                }
+            }
+            
             if (publicaciones != null) {
                 for (int i = 0; i < publicaciones.length(); i++) {
                     Publicacion p = publicaciones.obtenerEn(i);
@@ -249,29 +259,41 @@ public class PanelTimeline extends JPanel{
         lblUser.setFont(lblUser.getFont().deriveFont(Font.BOLD, 13f));
         lblUser.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-
         panelTextos.add(Box.createVerticalGlue());
         panelTextos.add(lblUser);
         panelTextos.add(Box.createVerticalStrut(2));
         panelTextos.add(Box.createVerticalGlue());
 
-       
-        JLabel btnSeguir = new JLabel("Seguir");
+        String miUsuario = SesionActual.getInstancia().getUserActual().getUser();
+
+
+        boolean yaLoSigue = false;
+        try {
+            PeticionRed reqEstado = new PeticionRed("LO_SIGUE", miUsuario, usuario.getUser());
+            RespuestaRed resEstado = ClienteInsta.getInstancia().enviarPeticion(reqEstado);
+            if (resEstado != null && resEstado.isExito() && resEstado.getContenido() instanceof Boolean) {
+                yaLoSigue = (Boolean) resEstado.getContenido();
+            }
+        } catch (Exception ex) {
+            System.err.println("Error al verificar estado de seguimiento: " + ex.getMessage());
+        }
+
+
+        JLabel btnSeguir = new JLabel(yaLoSigue ? "Siguiendo" : "Seguir");
         btnSeguir.setFont(btnSeguir.getFont().deriveFont(Font.BOLD, 12f));
-        btnSeguir.setForeground(new Color(0, 149, 246));
+        btnSeguir.setForeground(yaLoSigue ? Color.BLACK : new Color(0, 149, 246));
         btnSeguir.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         btnSeguir.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                String miUsuario = SesionActual.getInstancia().getUserActual().getUser();
                 boolean esParaSeguir = btnSeguir.getText().equals("Seguir");
                 String comando = esParaSeguir ? "SEGUIR_USUARIO" : "DEJAR_SEGUIR_USUARIO"; 
-                
+
                 try {
                     PeticionRed req = new PeticionRed(comando, miUsuario, usuario.getUser()); 
                     RespuestaRed res = ClienteInsta.getInstancia().enviarPeticion(req); 
-                    
+
                     if (res != null && res.isExito()) { 
                         if (esParaSeguir) {
                             btnSeguir.setText("Siguiendo");
@@ -280,9 +302,18 @@ public class PanelTimeline extends JPanel{
                             btnSeguir.setText("Seguir");
                             btnSeguir.setForeground(new Color(0, 149, 246));
                         }
+                        btnSeguir.revalidate();
+                         btnSeguir.repaint();
+
+                        //refrescar(); 
                         
-                       
-                        refrescar(); 
+                        SwingUtilities.invokeLater(() -> {
+                            try {
+                                refrescar();
+                            } catch (ArchivoCorruptoException ex) {
+                                System.err.println("Error al refrescar: " + ex.getMessage());
+                            }
+                        });
                     } else {
                         String msg = (res != null) ? res.getMensajeError() : "Error al procesar petición en el servidor"; 
                         JOptionPane.showMessageDialog(PanelTimeline.this, msg, "Error", JOptionPane.ERROR_MESSAGE); 
@@ -316,6 +347,6 @@ public class PanelTimeline extends JPanel{
         fila.add(btnSeguir, BorderLayout.EAST);
 
         return fila;
-    }
+        }
     
 }
