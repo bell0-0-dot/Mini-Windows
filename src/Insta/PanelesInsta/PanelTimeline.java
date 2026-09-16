@@ -24,6 +24,8 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.BorderFactory;
@@ -81,7 +83,25 @@ public class PanelTimeline extends JPanel{
             e.printStackTrace();
             contenedorPublicaciones.add(new JLabel("No se pudo cargar el timeline."));
         }
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent e) {
+                
+                refrescarSilencioso();
+            }
+        });
+
+        refrescarSilencioso();
     }
+        
+        public void refrescarSilencioso() {
+        try {
+            refrescar();
+        } catch (Exception ex) {
+            System.err.println("Error al refrescar el timeline: " + ex.getMessage());
+        }
+    }
+    
     
     public void refrescar() throws ArchivoCorruptoException{
         

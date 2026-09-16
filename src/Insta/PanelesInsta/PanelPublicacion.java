@@ -21,6 +21,7 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.Image;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -37,6 +38,7 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextPane;
+import javax.swing.SwingUtilities;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
@@ -142,8 +144,7 @@ public class PanelPublicacion extends JPanel{
         return null;
     }
     JLabel lblImagen;
-    String rutaCompleta = Paths.get( Rutas.rutaImagenes(publicacion.getAutor()),
-        publicacion.getRutaImagen()
+    String rutaCompleta = Paths.get( Rutas.rutaImagenes(publicacion.getAutor()),publicacion.getRutaImagen()
     ).toString();
 
     ImageIcon icono = new ImageIcon(rutaCompleta);
@@ -151,6 +152,16 @@ public class PanelPublicacion extends JPanel{
     
     lblImagen=new JLabel(new ImageIcon(escalada));
     lblImagen.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220), 1));
+    lblImagen.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    lblImagen.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                abrirDetalleModal();
+            }
+        });
+
+        
+        
 
     return lblImagen;
 }
@@ -165,6 +176,7 @@ public class PanelPublicacion extends JPanel{
     ImageIcon iconoLikeContorno = new ImageIcon(new ImageIcon(getClass().getResource("/Insta/Imagenes/like_contorno.png"))  .getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH));
     ImageIcon iconoComentario = new ImageIcon(new ImageIcon(getClass().getResource("/Insta/Imagenes/comentarios.png")).getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH));
 
+    
     String usuarioActual = SesionActual.getInstancia().getUserActual().getUser();
     boolean[] yaDioLike = { publicacion.getReacciones().contiene(new Reaccion(usuarioActual, null)) };
 
@@ -207,7 +219,14 @@ public class PanelPublicacion extends JPanel{
 
     JLabel iconoComentarios = new JLabel(iconoComentario);
     JLabel contadorComentarios = new JLabel(publicacion.getComentarios().length() + " comentarios");
-
+    iconoComentarios.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    iconoComentarios.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            abrirDetalleModal();
+        }
+    });
+    
     fila.add(botonLike);
     fila.add(contadorLikes);
     fila.add(Box.createHorizontalStrut(8));
@@ -301,6 +320,11 @@ public class PanelPublicacion extends JPanel{
         
         }
         
+    private void abrirDetalleModal() {
+        Frame framePadre = (Frame) SwingUtilities.getWindowAncestor(this);
+        PaneldetallePublicacion modal = new PaneldetallePublicacion(framePadre, publicacion, navegador);
+        modal.setVisible(true);
+}
     
     
     }
