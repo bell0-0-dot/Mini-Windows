@@ -12,6 +12,9 @@ import Insta.NavegarInsta;
 import Insta.PanelesInsta.AvatarCircular;
 import Insta.SesionActual;
 import Insta.UsuarioInsta;
+import Servidor.ClienteInsta;
+import Servidor.PeticionRed;
+import Servidor.RespuestaRed;
 import base.ListaEnlazada;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
@@ -62,7 +65,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
  * @author vasqu
  */
 public class PanelInbox extends JPanel{
-        private NavegarInsta navegador;
+    private NavegarInsta navegador;
     private JPanel panelListaChats;
     private JPanel contenedorDerecho;
     private CardLayout cardLayoutDerecho;
@@ -74,6 +77,8 @@ public class PanelInbox extends JPanel{
     private String contactoSeleccionado = "";
     private int ultimoConteoMensajes = -1;
     private Timer timerRefrescoChat;
+    private Timer timerActualizacion;
+    private String conversacionAbiertaCon;
 
     public PanelInbox(NavegarInsta navegador) throws ArchivoCorruptoException {
         this.navegador = navegador;
@@ -82,8 +87,12 @@ public class PanelInbox extends JPanel{
 
         inicializarInterfaz();
         
-         timerRefrescoChat = new Timer(3000, e -> refrescarChatEnTiempoReal());
+       
+        timerRefrescoChat = new Timer(3000, e -> refrescarChatEnTiempoReal());
         
+        
+        conectarConServidor();
+
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentShown(ComponentEvent e) {
@@ -97,19 +106,29 @@ public class PanelInbox extends JPanel{
                 timerRefrescoChat.stop();
             }
         });
-        
-        
-        
-        try{
+
+        try {
             cargarSeguidosComoChats();
-        }catch(ArchivoCorruptoException e){
-            
+        } catch (ArchivoCorruptoException e) {
+
         }
-        
+    }
+
+    private void conectarConServidor() {
+        try {
+           
+            ClienteInsta.getInstancia().registrarListenerNotificaciones(notif -> {
+                if (!contactoSeleccionado.isEmpty()) {
+                    SwingUtilities.invokeLater(this::refrescarChatEnTiempoReal);
+                }
+            });
+        } catch (Exception e) {
+            System.err.println("Error al conectar listener con el servidor: " + e.getMessage());
+        }
     }
 
     private void inicializarInterfaz() {
-        
+
         JPanel panelIzquierdo = new JPanel(new BorderLayout());
         panelIzquierdo.setPreferredSize(new Dimension(300, 0));
         panelIzquierdo.setBackground(Color.WHITE);
@@ -127,7 +146,7 @@ public class PanelInbox extends JPanel{
             AvatarCircular avatarUsuario = AvatarCircular.crear(miUsuario, 32);
             panelUsuarioInfo.add(avatarUsuario);
         } catch (ArchivoCorruptoException e) {
-            
+
         }
 
         JLabel lblMiUsuario = new JLabel(miUsuario + " ∨");
@@ -142,22 +161,22 @@ public class PanelInbox extends JPanel{
         txtBuscar.setBackground(new Color(245, 245, 245));
         txtBuscar.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
         txtBuscar.addFocusListener(new java.awt.event.FocusAdapter() {
-        @Override
-        public void focusGained(java.awt.event.FocusEvent e) {
-            if (txtBuscar.getText().equals(" Buscar") || txtBuscar.getText().equals("Buscar")) {
-                txtBuscar.setText("");
-                txtBuscar.setForeground(Color.BLACK); 
+            @Override
+            public void focusGained(java.awt.event.FocusEvent e) {
+                if (txtBuscar.getText().equals(" Buscar") || txtBuscar.getText().equals("Buscar")) {
+                    txtBuscar.setText("");
+                    txtBuscar.setForeground(Color.BLACK);
+                }
             }
-        }
 
-        @Override
-        public void focusLost(java.awt.event.FocusEvent e) {
-            if (txtBuscar.getText().trim().isEmpty()) {
-                txtBuscar.setText(" Buscar");
-                txtBuscar.setForeground(Color.GRAY); 
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                if (txtBuscar.getText().trim().isEmpty()) {
+                    txtBuscar.setText(" Buscar");
+                    txtBuscar.setForeground(Color.GRAY);
+                }
             }
-        }
-    });
+        });
         txtBuscar.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             @Override
             public void insertUpdate(javax.swing.event.DocumentEvent e) { filtrar(); }
@@ -168,14 +187,13 @@ public class PanelInbox extends JPanel{
 
             private void filtrar() {
                 String texto = txtBuscar.getText().trim();
-               
+
                 if (texto.equalsIgnoreCase("Buscar")) {
                     texto = "";
                 }
                 filtrarListaChats(texto);
             }
         });
-
 
         JLabel lblMensajesTitulo = new JLabel("Mensajes");
         lblMensajesTitulo.setFont(new Font("SansSerif", Font.BOLD, 15));
@@ -209,7 +227,6 @@ public class PanelInbox extends JPanel{
         panelIzquierdo.add(panelSuperiorIzquierdo, BorderLayout.NORTH);
         panelIzquierdo.add(scrollLista, BorderLayout.CENTER);
 
-        
         cardLayoutDerecho = new CardLayout();
         contenedorDerecho = new JPanel(cardLayoutDerecho);
 
@@ -253,18 +270,18 @@ public class PanelInbox extends JPanel{
         return panel;
     }
 
-    
     private void refrescarChatEnTiempoReal() {
         if (contactoSeleccionado.isEmpty() || SesionActual.getInstancia().getUserActual() == null) {
             return;
         }
 
         String miUsuario = SesionActual.getInstancia().getUserActual().getUser();
-        ListaEnlazada<Mensaje> historial = ServicioArchivoInsta.obtenerChatEntre(miUsuario, contactoSeleccionado);
+        
+      
+        ListaEnlazada<Mensaje> historial = obtenerChatDesdeServidor(miUsuario, contactoSeleccionado);
 
         int conteoActual = (historial != null) ? historial.length() : 0;
 
-      
         if (conteoActual != ultimoConteoMensajes) {
             cargarHistorialChat(miUsuario, contactoSeleccionado);
             try {
@@ -272,11 +289,11 @@ public class PanelInbox extends JPanel{
             } catch (ArchivoCorruptoException ex) { }
         }
     }
+
     private JPanel crearPantallaChat() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
 
-        
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(Color.WHITE);
         header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(230, 230, 230)));
@@ -291,10 +308,9 @@ public class PanelInbox extends JPanel{
         panelHeaderChatInfo.add(labelChatActivo);
         header.add(panelHeaderChatInfo, BorderLayout.WEST);
 
-        
         panelMensajes = new JPanel();
         panelMensajes.setLayout(new BoxLayout(panelMensajes, BoxLayout.Y_AXIS));
-        
+
         panelMensajes.setBackground(Color.WHITE);
 
         JScrollPane scrollMensajes = new JScrollPane(panelMensajes);
@@ -304,7 +320,6 @@ public class PanelInbox extends JPanel{
         scrollMensajes.getVerticalScrollBar().setUnitIncrement(16);
         scrollMensajes.setHorizontalScrollBar(null);
 
-      
         JPanel panelInput = new JPanel(new BorderLayout(10, 0));
         panelInput.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
         panelInput.setBackground(Color.WHITE);
@@ -351,28 +366,28 @@ public class PanelInbox extends JPanel{
         String miUsuario = SesionActual.getInstancia().getUserActual().getUser();
         panelListaChats.removeAll();
 
-        ListaEnlazada<String> seguidos = ServicioArchivoInsta.obtenerSeguidos(miUsuario);
+       
+        ListaEnlazada<String> seguidos = obtenerSeguidosDesdeServidor(miUsuario);
         ListaEnlazada<String> agregados = new ListaEnlazada<>();
+
         if (seguidos != null) {
             for (int i = 0; i < seguidos.length(); i++) {
                 String usuarioSeguido = seguidos.obtenerEn(i);
-                
-               
-                if (!agregados.contiene(usuarioSeguido)) {
-                    if (ServicioArchivoInsta.buscarUsuario(usuarioSeguido) != null) {
-                        agregados.insertarFinal(usuarioSeguido);
-                        
-                        ListaEnlazada<Mensaje> chat = ServicioArchivoInsta.obtenerChatEntre(miUsuario, usuarioSeguido);
-                        String ultimoTexto = "Haz clic para chatear";
-                        String tiempo = "";
 
-                        if (chat != null && chat.length() > 0) {
-                            Mensaje ultimoMsg = chat.obtenerEn(chat.length() - 1);
-                            ultimoTexto = ultimoMsg.getContenido();
-                            tiempo = ultimoMsg.getHoraFormato();
-                        }
-                        agregarFilaContacto(usuarioSeguido, "Haz clic para chatear", "Ahora");
+                if (!agregados.contiene(usuarioSeguido)) {
+                    agregados.insertarFinal(usuarioSeguido);
+
+                  
+                    ListaEnlazada<Mensaje> chat = obtenerChatDesdeServidor(miUsuario, usuarioSeguido);
+                    String ultimoTexto = "Haz clic para chatear";
+                    String tiempo = "Ahora";
+
+                    if (chat != null && chat.length() > 0) {
+                        Mensaje ultimoMsg = chat.obtenerEn(chat.length() - 1);
+                        ultimoTexto = ultimoMsg.getContenido();
+                        tiempo = ultimoMsg.getHoraFormato();
                     }
+                    agregarFilaContacto(usuarioSeguido, ultimoTexto, tiempo);
                 }
             }
         }
@@ -380,6 +395,7 @@ public class PanelInbox extends JPanel{
         panelListaChats.revalidate();
         panelListaChats.repaint();
     }
+
     private void filtrarListaChats(String filtro) {
         String query = filtro.toLowerCase();
 
@@ -387,7 +403,6 @@ public class PanelInbox extends JPanel{
             if (comp instanceof JPanel) {
                 JPanel fila = (JPanel) comp;
                 boolean coincide = false;
-
 
                 for (Component subComp : fila.getComponents()) {
                     if (subComp instanceof JPanel) { 
@@ -408,7 +423,7 @@ public class PanelInbox extends JPanel{
 
         panelListaChats.revalidate();
         panelListaChats.repaint();
-}
+    }
 
     private void agregarFilaContacto(String username, String ultimoMensaje, String tiempo) {
         JPanel fila = new JPanel(new BorderLayout(12, 0));
@@ -446,7 +461,7 @@ public class PanelInbox extends JPanel{
             public void mouseClicked(MouseEvent e) {
                 contactoSeleccionado = username;
                 String miUsuario = SesionActual.getInstancia().getUserActual().getUser();
-               
+
                 panelHeaderChatInfo.removeAll();
                 try {
                     AvatarCircular avatarTop = AvatarCircular.crear(username, 36);
@@ -484,9 +499,10 @@ public class PanelInbox extends JPanel{
         if (!texto.isEmpty() && !contactoSeleccionado.isEmpty()) {
             String miUsuario = SesionActual.getInstancia().getUserActual().getUser();
             Mensaje msg = new Mensaje(miUsuario, contactoSeleccionado, texto);
-           
-            ServicioArchivoInsta.guardarMensaje(msg);
+
             
+            guardarMensajeEnServidor(msg);
+
             agregarBurbujaTexto(msg);
             campoTexto.setText("");
             try {
@@ -496,68 +512,61 @@ public class PanelInbox extends JPanel{
             }
         }
     }
+
     private void enviarSticker(String rutaImagen) {
-    if (!contactoSeleccionado.isEmpty()) {
-        String miUsuario = SesionActual.getInstancia().getUserActual().getUser();
-        
-       
-        
-        
-        File archivoSticker = new File(rutaImagen);
-        String nombreSticker = archivoSticker.getName();
+        if (!contactoSeleccionado.isEmpty()) {
+            String miUsuario = SesionActual.getInstancia().getUserActual().getUser();
 
-        Mensaje msg = new Mensaje(
-                miUsuario,
-                contactoSeleccionado,
-                nombreSticker,
-                true
-        );
+            File archivoSticker = new File(rutaImagen);
+            String nombreSticker = archivoSticker.getName();
 
-        
-        agregarBurbujaImagen(msg, true);
+            Mensaje msg = new Mensaje(
+                    miUsuario,
+                    contactoSeleccionado,
+                    nombreSticker,
+                    true
+            );
 
-        ServicioArchivoInsta.guardarMensaje(msg);
+            agregarBurbujaImagen(msg, true);
 
-        try {
-            cargarSeguidosComoChats();
-        } catch (ArchivoCorruptoException ex) {
-            ex.printStackTrace();
-        }
-    }
-}
-    
-    
-    private void cargarHistorialChat(String miUsuario, String contacto) {
-        panelMensajes.removeAll();
-        
-       
-        ListaEnlazada<Mensaje> historial = ServicioArchivoInsta.obtenerChatEntre(miUsuario, contacto);
-        
-        if (historial != null) {
-            ultimoConteoMensajes = historial.length();
-             for (int i = 0; i < historial.length(); i++) {
+           
+            guardarMensajeEnServidor(msg);
 
-                Mensaje msg = historial.obtenerEn(i);
-
-            if (msg.isEsSticker()) {
-                agregarBurbujaImagen(msg,msg.getAutor().equalsIgnoreCase(miUsuario));
-            } else {
-                ultimoConteoMensajes = 0;
-                agregarBurbujaTexto(msg);
+            try {
+                cargarSeguidosComoChats();
+            } catch (ArchivoCorruptoException ex) {
+                ex.printStackTrace();
             }
         }
+    }
+
+    private void cargarHistorialChat(String miUsuario, String contacto) {
+        panelMensajes.removeAll();
+
+  
+        ListaEnlazada<Mensaje> historial = obtenerChatDesdeServidor(miUsuario, contacto);
+
+        if (historial != null) {
+            ultimoConteoMensajes = historial.length();
+            for (int i = 0; i < historial.length(); i++) {
+                Mensaje msg = historial.obtenerEn(i);
+
+                if (msg.isEsSticker()) {
+                    agregarBurbujaImagen(msg, msg.getAutor().equalsIgnoreCase(miUsuario));
+                } else {
+                    agregarBurbujaTexto(msg);
+                }
+            }
         }
-        
+
         panelMensajes.revalidate();
         panelMensajes.repaint();
-        
-        
-        SwingUtilities.invokeLater(() -> 
+
+        SwingUtilities.invokeLater(() ->
             panelMensajes.scrollRectToVisible(new Rectangle(0, panelMensajes.getHeight(), 1, 1))
         );
     }
 
-    
     private void agregarBurbujaTexto(Mensaje msg) {
         String miUsuario = SesionActual.getInstancia().getUserActual().getUser();
         boolean esMio = msg.getAutor().equalsIgnoreCase(miUsuario);
@@ -572,7 +581,7 @@ public class PanelInbox extends JPanel{
         );
 
         fila.add(burbuja);
-        
+
         fila.setMaximumSize(new Dimension(Integer.MAX_VALUE, fila.getPreferredSize().height));
 
         panelMensajes.add(fila);
@@ -582,20 +591,16 @@ public class PanelInbox extends JPanel{
     }
 
     private void agregarBurbujaImagen(Mensaje mensaje, boolean esMio) {
-        String rutaSticker = Rutas.rutaStickersPersonales(mensaje.getAutor())+ File.separator+ mensaje.getContenido().toString();
+        String rutaSticker = Rutas.rutaStickersPersonales(mensaje.getAutor()) + File.separator + mensaje.getContenido().toString();
         File archivoImg = new File(rutaSticker);
-        
+
         if (!archivoImg.exists()) {
             String rutaGlobal = Rutas.RUTA_STICKERS_GLOBALES + File.separator + mensaje.getContenido();
             archivoImg = new File(rutaGlobal);
         }
-        
-        JPanel fila = new JPanel(new FlowLayout(esMio ? FlowLayout.RIGHT : FlowLayout.LEFT,10,2
-                )
-        );
+
+        JPanel fila = new JPanel(new FlowLayout(esMio ? FlowLayout.RIGHT : FlowLayout.LEFT, 10, 2));
         fila.setBackground(Color.WHITE);
-        
-        
 
         if (archivoImg.exists()) {
             ImageIcon iconOriginal = new ImageIcon(archivoImg.getAbsolutePath());
@@ -619,7 +624,6 @@ public class PanelInbox extends JPanel{
         );
     }
 
-    
     private void mostrarSelectorStickers(Component invoker) {
         JPopupMenu popupMenu = new JPopupMenu();
         JTabbedPane tabbedPane = new JTabbedPane();
@@ -627,9 +631,7 @@ public class PanelInbox extends JPanel{
 
         String miUsuario = SesionActual.getInstancia().getUserActual().getUser();
 
-        
         tabbedPane.addTab("Personales", crearGridStickers(Rutas.rutaStickersPersonales(miUsuario), popupMenu, true));
-        
         tabbedPane.addTab("Globales", crearGridStickers(Rutas.RUTA_STICKERS_GLOBALES, popupMenu, false));
 
         popupMenu.add(tabbedPane);
@@ -639,7 +641,7 @@ public class PanelInbox extends JPanel{
     private JScrollPane crearGridStickers(String rutaCarpeta, JPopupMenu popup, boolean esPersonal) {
         JPanel panelGrid = new JPanel(new GridLayout(0, 3, 5, 5));
         panelGrid.setBackground(Color.WHITE);
-        
+
         if (esPersonal) {
             JButton btnImportar = new JButton("+");
             btnImportar.setFont(new Font("SansSerif", Font.BOLD, 22));
@@ -669,7 +671,6 @@ public class PanelInbox extends JPanel{
                     btn.addActionListener(e -> {
                         popup.setVisible(false);
                         enviarSticker(f.getAbsolutePath());
-                        
                     });
 
                     panelGrid.add(btn);
@@ -686,7 +687,6 @@ public class PanelInbox extends JPanel{
         return scroll;
     }
 
-    
     private static class BurbujaRedondeada extends JPanel {
         private String texto;
         private Color colorFondo;
@@ -715,8 +715,8 @@ public class PanelInbox extends JPanel{
             g2.dispose();
             super.paintComponent(g);
         }
+    }
 
-}
     private void importarStickerPersonal(JPopupMenu popup) {
         Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(this);
 
@@ -731,7 +731,6 @@ public class PanelInbox extends JPanel{
             File archivoSeleccionado = new File(directorio, archivo);
             String miUsuario = SesionActual.getInstancia().getUserActual().getUser();
 
-
             File carpetaDestino = new File(Rutas.rutaStickersPersonales(miUsuario));
             if (!carpetaDestino.exists()) {
                 carpetaDestino.mkdirs();
@@ -740,7 +739,6 @@ public class PanelInbox extends JPanel{
             File archivoDestino = new File(carpetaDestino, archivoSeleccionado.getName());
 
             try {
-
                 Files.copy(archivoSeleccionado.toPath(), archivoDestino.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
                 if (popup != null) {
@@ -752,7 +750,44 @@ public class PanelInbox extends JPanel{
                 JOptionPane.showMessageDialog(this, "Error al guardar el sticker: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+
+  //servidor
+    private void guardarMensajeEnServidor(Mensaje msg) {
+        try {
+            PeticionRed peticion = new PeticionRed("GUARDAR_MENSAJE", msg);
+            ClienteInsta.getInstancia().enviarPeticion(peticion);
+        } catch (Exception e) {
+            System.err.println("Error al guardar mensaje en el servidor: " + e.getMessage());
         }
-    
-    
+    }
+
+    private ListaEnlazada<Mensaje> obtenerChatDesdeServidor(String u1, String u2) {
+        try {
+            String[] params = new String[]{u1, u2};
+            PeticionRed peticion = new PeticionRed("OBTENER_CHAT_ENTRE", (Object[]) params);
+            RespuestaRed respuesta = ClienteInsta.getInstancia().enviarPeticion(peticion);
+
+            if (respuesta != null && respuesta.isExito() && respuesta.getContenido() instanceof ListaEnlazada) {
+                return (ListaEnlazada<Mensaje>) respuesta.getContenido();
+            }
+        } catch (Exception e) {
+            System.err.println("Error al obtener chat desde el servidor: " + e.getMessage());
+        }
+        return new ListaEnlazada<>();
+    }
+
+    private ListaEnlazada<String> obtenerSeguidosDesdeServidor(String usuario) {
+        try {
+            PeticionRed peticion = new PeticionRed("OBTENER_SEGUIDOS", usuario);
+            RespuestaRed respuesta = ClienteInsta.getInstancia().enviarPeticion(peticion);
+
+            if (respuesta != null && respuesta.isExito() && respuesta.getContenido() instanceof ListaEnlazada) {
+                return (ListaEnlazada<String>) respuesta.getContenido();
+            }
+        } catch (Exception e) {
+            System.err.println("Error al obtener seguidos desde el servidor: " + e.getMessage());
+        }
+        return new ListaEnlazada<>();
+    }
 }

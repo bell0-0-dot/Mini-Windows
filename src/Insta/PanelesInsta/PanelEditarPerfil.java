@@ -10,6 +10,9 @@ import Insta.Genero;
 import Insta.NavegarInsta;
 import Insta.SesionActual;
 import Insta.UsuarioInsta;
+import Servidor.ClienteInsta;
+import Servidor.PeticionRed;
+import Servidor.RespuestaRed;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -49,7 +52,6 @@ public class PanelEditarPerfil extends JPanel{
     private NavegarInsta navegador;
     private UsuarioInsta usuarioActual;
     private AvatarCircular avatarPerfil;
-    private JLabel lblFotoPerfil;
     private JButton btnCambiarFoto;
     private String rutaNuevaFoto = null;
     private JTextField txtNombre;
@@ -57,9 +59,10 @@ public class PanelEditarPerfil extends JPanel{
     private JSpinner spEdad;
     private JTextField txtUser;
     private JPasswordField txtPassword;
+    private JPasswordField txtConfirmPassword;
     private JButton btnGuardar;
     private JButton btnDesactivar;
-    
+
     public PanelEditarPerfil(NavegarInsta navegador) {
         this.navegador = navegador;
         this.usuarioActual = (UsuarioInsta) SesionActual.getInstancia().getUserActual();
@@ -71,9 +74,8 @@ public class PanelEditarPerfil extends JPanel{
         inicializarInterfaz();
         cargarDatosUsuario();
     }
-    
+
     private void inicializarInterfaz() {
-        
         JPanel panelIzquierdo = new JPanel();
         panelIzquierdo.setLayout(new BoxLayout(panelIzquierdo, BoxLayout.Y_AXIS));
         panelIzquierdo.setBackground(Color.WHITE);
@@ -102,18 +104,16 @@ public class PanelEditarPerfil extends JPanel{
         panelIzquierdo.add(Box.createVerticalStrut(15));
         panelIzquierdo.add(btnCambiarFoto);
 
-        
         JPanel panelDerecho = new JPanel(new GridBagLayout());
         panelDerecho.setBackground(Color.WHITE);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(8, 8, 8, 8);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-       
         Font fontLabel = new Font("SansSerif", Font.BOLD, 13);
         Font fontInput = new Font("SansSerif", Font.PLAIN, 13);
 
-   
+        
         gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.3;
         JLabel lblNombre = new JLabel("Nombre completo:");
         lblNombre.setFont(fontLabel);
@@ -124,7 +124,7 @@ public class PanelEditarPerfil extends JPanel{
         txtNombre.setFont(fontInput);
         panelDerecho.add(txtNombre, gbc);
 
-
+       
         gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.3;
         JLabel lblGenero = new JLabel("Género:");
         lblGenero.setFont(fontLabel);
@@ -147,7 +147,7 @@ public class PanelEditarPerfil extends JPanel{
         spEdad.setFont(fontInput);
         panelDerecho.add(spEdad, gbc);
 
-       
+        
         gbc.gridx = 0; gbc.gridy = 3; gbc.weightx = 0.3;
         JLabel lblUser = new JLabel("Usuario:");
         lblUser.setFont(fontLabel);
@@ -158,9 +158,9 @@ public class PanelEditarPerfil extends JPanel{
         txtUser.setFont(fontInput);
         panelDerecho.add(txtUser, gbc);
 
-       
+      
         gbc.gridx = 0; gbc.gridy = 4; gbc.weightx = 0.3;
-        JLabel lblPass = new JLabel("Contraseña:");
+        JLabel lblPass = new JLabel("Nueva Contraseña:");
         lblPass.setFont(fontLabel);
         panelDerecho.add(lblPass, gbc);
 
@@ -169,10 +169,20 @@ public class PanelEditarPerfil extends JPanel{
         txtPassword.setFont(fontInput);
         panelDerecho.add(txtPassword, gbc);
 
+        
+        gbc.gridx = 0; gbc.gridy = 5; gbc.weightx = 0.3;
+        JLabel lblConfirmPass = new JLabel("Confirmar Contraseña:");
+        lblConfirmPass.setFont(fontLabel);
+        panelDerecho.add(lblConfirmPass, gbc);
+
+        gbc.gridx = 1; gbc.weightx = 0.7;
+        txtConfirmPassword = new JPasswordField();
+        txtConfirmPassword.setFont(fontInput);
+        panelDerecho.add(txtConfirmPassword, gbc);
+
         JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 10));
         panelBotones.setBackground(Color.WHITE);
 
-        
         btnDesactivar = new JButton("Desactivar cuenta");
         btnDesactivar.setFont(new Font("SansSerif", Font.BOLD, 12));
         btnDesactivar.setForeground(new Color(237, 73, 86));
@@ -182,7 +192,6 @@ public class PanelEditarPerfil extends JPanel{
         btnDesactivar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnDesactivar.addActionListener(e -> desactivarCuenta());
 
-       
         btnGuardar = new JButton("Guardar cambios");
         btnGuardar.setFont(new Font("SansSerif", Font.BOLD, 13));
         btnGuardar.setBackground(new Color(0, 149, 246));
@@ -198,13 +207,13 @@ public class PanelEditarPerfil extends JPanel{
         panelBotones.add(btnDesactivar);
         panelBotones.add(btnGuardar);
 
-        gbc.gridx = 0; gbc.gridy = 5; gbc.gridwidth = 2;
+        gbc.gridx = 0; gbc.gridy = 6; gbc.gridwidth = 2;
         panelDerecho.add(panelBotones, gbc);
 
-      
         this.add(panelIzquierdo, BorderLayout.WEST);
         this.add(panelDerecho, BorderLayout.CENTER);
     }
+
     private void cargarDatosUsuario() {
         if (usuarioActual != null) {
             txtNombre.setText(usuarioActual.getNombre());
@@ -212,8 +221,10 @@ public class PanelEditarPerfil extends JPanel{
             spEdad.setValue(usuarioActual.getEdad());
             txtUser.setText(usuarioActual.getUser());
             txtPassword.setText(usuarioActual.getPassword());
+            txtConfirmPassword.setText(usuarioActual.getPassword());
         }
     }
+
     private void seleccionarNuevaFoto() {
         Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(this);
         FileDialog chooser = new FileDialog(parentFrame, "Seleccionar foto de perfil", FileDialog.LOAD);
@@ -227,27 +238,41 @@ public class PanelEditarPerfil extends JPanel{
             File seleccionado = new File(directorio, archivo);
             rutaNuevaFoto = seleccionado.getAbsolutePath();
 
-          
             Image nuevaImagen = new ImageIcon(rutaNuevaFoto).getImage();
             avatarPerfil.setImagen(nuevaImagen);
         }
     }
+
+    private boolean esAlfanumerica(String pass) {
+        boolean tieneLetra = pass.matches(".*[a-zA-Z].*");
+        boolean tieneNumero = pass.matches(".*[0-9].*");
+        return tieneLetra && tieneNumero;
+    }
+
     private void guardarCambios() {
         String nuevoNombre = txtNombre.getText().trim();
         Genero nuevoGenero = (Genero) cbGenero.getSelectedItem();
         int nuevaEdad = (Integer) spEdad.getValue();
         String nuevoUser = txtUser.getText().trim();
         String nuevaPassword = new String(txtPassword.getPassword()).trim();
+        String confirmPassword = new String(txtConfirmPassword.getPassword()).trim();
 
-        if (nuevoNombre.isEmpty() || nuevoUser.isEmpty() || nuevaPassword.isEmpty()) {
+        if (nuevoNombre.isEmpty() || nuevoUser.isEmpty() || nuevaPassword.isEmpty() || confirmPassword.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Por favor completa todos los campos obligatorios.", "Campos vacíos", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        usuarioActual.setNombre(nuevoNombre);
-        usuarioActual.setGenero(nuevoGenero);
-        usuarioActual.setEdad(nuevaEdad);
-        usuarioActual.setUser(nuevoUser);
-        usuarioActual.setPassword(nuevaPassword);
+
+      
+        if (!nuevaPassword.equals(confirmPassword)) {
+            JOptionPane.showMessageDialog(this, "Las contraseñas ingresadas no coinciden.", "Error de confirmación", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        
+        if (!esAlfanumerica(nuevaPassword)) {
+            JOptionPane.showMessageDialog(this, "La contraseña debe ser alfanumérica (contener letras y números).", "Contraseña inválida", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
        
         if (rutaNuevaFoto != null) {
@@ -267,14 +292,34 @@ public class PanelEditarPerfil extends JPanel{
                 return;
             }
         }
+
+        
+        usuarioActual.setNombre(nuevoNombre);
+        usuarioActual.setGenero(nuevoGenero);
+        usuarioActual.setEdad(nuevaEdad);
+        usuarioActual.setUser(nuevoUser);
+        usuarioActual.setPassword(nuevaPassword);
+
+       
         try {
-            ServicioArchivoInsta.actualizarUsuario(usuarioActual);
-            JOptionPane.showMessageDialog(this, "Perfil actualizado con éxito.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            PeticionRed req = new PeticionRed("ACTUALIZAR_USUARIO", usuarioActual);
+            RespuestaRed res = ClienteInsta.getInstancia().enviarPeticion(req);
+
+            if (res != null && res.isExito()) {
+                JOptionPane.showMessageDialog(this, "Perfil actualizado con éxito. Por favor inicia sesión de nuevo.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                
+                
+                SesionActual.getInstancia().cerrarSesion();
+                navegador.cerrarSesion();
+            } else {
+                String msgError = (res != null) ? res.getMensajeError() : "Error de comunicación con el servidor.";
+                JOptionPane.showMessageDialog(this, msgError, "Error", JOptionPane.ERROR_MESSAGE);
+            }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error al guardar: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error de red al actualizar: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
-        }
-    
+    }
+
     private void desactivarCuenta() {
         int confirm = JOptionPane.showConfirmDialog(
             this,
@@ -286,18 +331,19 @@ public class PanelEditarPerfil extends JPanel{
 
         if (confirm == JOptionPane.YES_OPTION) {
             try {
-               
                 usuarioActual.desactivarUser();
 
-               
-                ServicioArchivoInsta.actualizarUsuario(usuarioActual);
+                PeticionRed req = new PeticionRed("DESACTIVAR_CUENTA", usuarioActual);
+                RespuestaRed res = ClienteInsta.getInstancia().enviarPeticion(req);
 
-                JOptionPane.showMessageDialog(this, "Tu cuenta ha sido desactivada.", "Cuenta Desactivada", JOptionPane.INFORMATION_MESSAGE);
-
-               
-                SesionActual.getInstancia().cerrarSesion();
-                navegador.cerrarSesion();
-
+                if (res != null && res.isExito()) {
+                    JOptionPane.showMessageDialog(this, "Tu cuenta ha sido desactivada.", "Cuenta Desactivada", JOptionPane.INFORMATION_MESSAGE);
+                    SesionActual.getInstancia().cerrarSesion();
+                    navegador.cerrarSesion();
+                } else {
+                    String msgError = (res != null) ? res.getMensajeError() : "Error al desactivar en el servidor.";
+                    JOptionPane.showMessageDialog(this, msgError, "Error", JOptionPane.ERROR_MESSAGE);
+                }
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(this, "Error al desactivar la cuenta: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }

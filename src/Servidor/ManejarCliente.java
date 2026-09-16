@@ -248,7 +248,48 @@ public class ManejarCliente implements Runnable{
                         return new RespuestaRed(true,chat, null);
                     }
                 }
+                case "ACTUALIZAR_USUARIO": {
+                    UsuarioInsta usuarioEditado = (UsuarioInsta) peticion.getParametros()[0];
+                    synchronized (ServicioArchivoInsta.class) {
+                        ServicioArchivoInsta.actualizarUsuario(usuarioEditado);
+                    }
+                    
+                  
+                    if (usuarioConectado != null && !usuarioConectado.equals(usuarioEditado.getUser())) {
+                        ServidorInsta.removerCliente(usuarioConectado);
+                        usuarioConectado = usuarioEditado.getUser();
+                        ServidorInsta.agregarCliente(usuarioConectado, out);
+                    }
+                    return new RespuestaRed(true, usuarioEditado, "Usuario actualizado correctamente");
+                }
 
+                case "DESACTIVAR_CUENTA": {
+                    UsuarioInsta usuarioADesactivar = (UsuarioInsta) peticion.getParametros()[0];
+                    synchronized (ServicioArchivoInsta.class) {
+                        ServicioArchivoInsta.actualizarUsuario(usuarioADesactivar);
+                    }
+                    if (usuarioConectado != null) {
+                        ServidorInsta.removerCliente(usuarioConectado);
+                        usuarioConectado = null;
+                    }
+                    return new RespuestaRed(true, null, "Cuenta desactivada correctamente");
+                }
+                case "BUSCAR_USUARIOS": {
+                    String texto = (String) peticion.getParametros()[0];
+                    synchronized (ServicioArchivoInsta.class) {
+                        ListaEnlazada<UsuarioInsta> resultado = ServicioArchivoInsta.buscarUsuariosParcial(texto);
+                        return new RespuestaRed(true, resultado, null);
+                    }
+                }
+                case "OBTENER_NOTIFICACIONES": {
+                    String username = (String) peticion.getParametros()[0];
+                    synchronized (ServicioArchivoInsta.class) {
+                        ListaEnlazada<Notificacion> notifs = ServicioArchivoInsta.obtenerNotificaciones(username);
+                        return new RespuestaRed(true, notifs, null);
+                    }
+                }
+                
+                
                 default:
 
                     return new RespuestaRed(false,null,"Comando desconocido" );

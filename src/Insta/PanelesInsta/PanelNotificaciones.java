@@ -81,7 +81,7 @@ public class PanelNotificaciones extends JPanel {
             if (historial == null || historial.length() == 0) {
                 mostrarMensajeVacio();
             } else {
-                // Iterar en orden inverso para mostrar las más recientes arriba
+             
                 for (int i = historial.length() - 1; i >= 0; i--) {
                     Notificacion notif = historial.obtenerEn(i);
                     agregarFilaNotificacion(notif, false);
