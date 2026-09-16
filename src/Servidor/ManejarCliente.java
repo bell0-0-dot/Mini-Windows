@@ -111,12 +111,16 @@ public class ManejarCliente implements Runnable{
 
                     String username =(String) peticion.getParametros()[0];
 
-                    synchronized (
-                            ServicioArchivoInsta.class) {
-
+                    synchronized ( ServicioArchivoInsta.class) {
                         ListaEnlazada timeline = ServicioArchivoInsta  .obtenerTimeline( username);
-
                         return new RespuestaRed(true,timeline,  null);
+                    }
+                }
+                case "OBTENER_SEGUIDOS":{
+                    String username=(String) peticion.getParametros()[0];
+                    synchronized ( ServicioArchivoInsta.class) {
+                        ListaEnlazada seguidos=ServicioArchivoInsta.obtenerSeguidos(username);
+                        return new RespuestaRed(true,seguidos,null);
                     }
                 }
 

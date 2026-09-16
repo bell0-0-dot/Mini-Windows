@@ -334,19 +334,18 @@ public class ServicioArchivoInsta {
     
     //metodo para guardar cambios de usuarios:
     public static void actualizarUsuario(UsuarioInsta usuarioModificado) throws ArchivoCorruptoException, IOException {
-    ListaEnlazada<UsuarioInsta> lista = cargarLista();
-    Nodo<UsuarioInsta> actual = lista.getCabeza();
+        ListaEnlazada<UsuarioInsta> lista = cargarLista();
+        Nodo<UsuarioInsta> actual = lista.getCabeza();
 
-    while (actual != null) {
-       
-        if (actual.getDato().equals(usuarioModificado)) {
-            actual.setDato(usuarioModificado); 
-            break;
+        while (actual != null) {
+            if (actual.getDato().getUser().equals(usuarioModificado.getUser())) {
+                actual.setDato(usuarioModificado);
+                break;
+            }
+            actual = actual.getSiguiente();
         }
-        actual = actual.getSiguiente();
-    }
 
-    guardarLista(lista);
+        guardarLista(lista);
 }
     
     //servidor mensajes

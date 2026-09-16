@@ -148,6 +148,7 @@ public class PanelApp extends JPanel implements NavegarInsta{
 
     @Override
     public void cerrarSesion() { 
+        panelInbox.detenerPolling(); 
         SesionActual.getInstancia().cerrarSesion();
         
         if (this.navegador != null) {
@@ -155,6 +156,7 @@ public class PanelApp extends JPanel implements NavegarInsta{
     }
     }
     public void recargarSesion() {
+        
         this.removeAll(); 
 
         cardLayout = new CardLayout();

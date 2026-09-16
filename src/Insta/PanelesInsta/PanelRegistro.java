@@ -58,26 +58,26 @@ public  class PanelRegistro extends PanelAuth{
     private static final GridBagConstraints gbcTarjeta = new GridBagConstraints();
     private File archivoFoto;
     private JButton btnRegistrar;
-    
-    
-    
-    
+
+
+
+
 
     public PanelRegistro(Consumer<String> navegar) {
-        
+
         super(navegar);
         configurarEventos();
-        
+
     }
     @Override
     protected void construirContenidoTarjeta(JPanel tarjeta){
-        
+
         gbcTarjeta.gridx=0;
         gbcTarjeta.fill=GridBagConstraints.HORIZONTAL;
         gbcTarjeta.weightx=1.0;
-        
+
         fotoPerfil=new JLabel();
-        
+
         try{
             ImageIcon iconoOriginal=new ImageIcon(getClass().getResource("/Insta/Imagenes/UserIcon.png"));
             Image iconoUsuario=iconoOriginal.getImage().getScaledInstance(90, 90, Image.SCALE_SMOOTH);
@@ -85,7 +85,7 @@ public  class PanelRegistro extends PanelAuth{
             fotoPerfil.setHorizontalAlignment(SwingConstants.CENTER);
             fotoPerfil.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             fotoPerfil.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 8));
-            
+
         }catch(Exception e){
             System.out.println("Error al cargar la imagen"+e.getMessage());
         }
@@ -93,16 +93,16 @@ public  class PanelRegistro extends PanelAuth{
         gbcTarjeta.anchor= GridBagConstraints.CENTER;
         gbcTarjeta.insets = new Insets(10, 10, 2, 10);
         tarjeta.add(fotoPerfil, gbcTarjeta);
-        
+
         labelAgregarFoto=new JLabel("Agregar foto de perfil");
         labelAgregarFoto.setForeground(new Color(0,149,246));
         labelAgregarFoto.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         labelAgregarFoto.setHorizontalAlignment(SwingConstants.CENTER);
-        
+
         gbcTarjeta.gridy=1;
         gbcTarjeta.insets=new Insets(0,10,15,10);
         tarjeta.add(labelAgregarFoto,gbcTarjeta);
-        
+
         campoNombre=new JTextField(20);
         campoNombre.setText("Nombre completo");
         campoNombre.setForeground(Color.GRAY);
@@ -126,16 +126,16 @@ public  class PanelRegistro extends PanelAuth{
          gbcTarjeta.gridy=2;
          gbcTarjeta.insets=new Insets(5,10,8,10);
          tarjeta.add(campoNombre,gbcTarjeta);
-         
+
         JPanel panelGeneroEdad = new JPanel(new GridBagLayout());
         panelGeneroEdad.setOpaque(false);
         campoGenero = new JComboBox<>(Genero.values());
-        
+
         campoGenero.setBackground(Color.WHITE);
         campoGenero.setForeground(Color.BLACK);
         campoGenero.setPreferredSize(new Dimension(170, 35));
         panelGeneroEdad.add(campoGenero);
-        
+
         campoEdad = new JSpinner();
 
         SpinnerNumberModel modeloEdad = new SpinnerNumberModel(
@@ -162,7 +162,7 @@ public  class PanelRegistro extends PanelAuth{
         gbcEdad.weightx = 0.0;
 
         panelGeneroEdad.add(campoEdad, gbcEdad);
-         
+
         gbcTarjeta.gridx = 0;
         gbcTarjeta.gridy = 3;
         gbcTarjeta.fill = GridBagConstraints.HORIZONTAL;
@@ -170,7 +170,7 @@ public  class PanelRegistro extends PanelAuth{
         gbcTarjeta.insets = new Insets(5, 10, 8, 10);
 
         tarjeta.add(panelGeneroEdad, gbcTarjeta);
-         
+
          campoUsername=new JTextField();
          campoUsername.setText("Usuario");
          campoUsername.setForeground(Color.GRAY);
@@ -195,31 +195,31 @@ public  class PanelRegistro extends PanelAuth{
          gbcTarjeta.gridy=4;
          gbcTarjeta.insets=new Insets(5,10,8,10);
          tarjeta.add(campoUsername, gbcTarjeta);
-         
-         
+
+
          JPanel panelPassword=new JPanel(new BorderLayout());
          panelPassword.setPreferredSize(new Dimension(250,35));
          panelPassword.setBackground(Color.WHITE);
          panelPassword.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
-         
+
          campoPassword = new JPasswordField(20);
          campoPassword.setBorder(BorderFactory.createEmptyBorder(5, 8, 5, 8));
          char ecoOriginal = campoPassword.getEchoChar();
          campoPassword.setText("Contraseña");
          campoPassword.setForeground(Color.GRAY);
          campoPassword.setEchoChar((char) 0);
-         
+
          JLabel labelOjo1=new JLabel();
          JLabel labelOjo2=new JLabel();
          try {
         ImageIcon ojo1Original = new ImageIcon(getClass().getResource("/Insta/Imagenes/ojo1.png"));
         Image ojo1 = ojo1Original.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
         labelOjo1.setIcon(new ImageIcon(ojo1));
-        
+
         ImageIcon ojo2Orriginal=new ImageIcon(getClass().getResource("/Insta/Imagenes/ojo2.png"));
         Image ojo2=ojo2Orriginal.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
         labelOjo2.setIcon(new ImageIcon(ojo2));
-       
+
     } catch (Exception e) {
         System.err.println("No se pudo cargar la imagen: " + e.getMessage());
     }
@@ -237,9 +237,9 @@ public  class PanelRegistro extends PanelAuth{
         labelOjo2.setBorder(
             BorderFactory.createEmptyBorder(0, 5, 0, 8)
         ); 
-         
-         
-         
+
+
+
          campoPassword.addFocusListener(new java.awt.event.FocusAdapter() {
         @Override
         public void focusGained(java.awt.event.FocusEvent e) {
@@ -266,10 +266,10 @@ public  class PanelRegistro extends PanelAuth{
     @Override
     public void mouseClicked(java.awt.event.MouseEvent e) {
 
-        
+
         campoPassword.setEchoChar((char) 0);
 
-        
+
         panelPassword.remove(labelOjo1);
         panelPassword.add(labelOjo2, BorderLayout.EAST);
 
@@ -285,10 +285,10 @@ public  class PanelRegistro extends PanelAuth{
     @Override
     public void mouseClicked(java.awt.event.MouseEvent e) {
 
-        
+
         campoPassword.setEchoChar(ecoOriginal);
 
-        
+
         panelPassword.remove(labelOjo2);
         panelPassword.add(labelOjo1, BorderLayout.EAST);
 
@@ -297,10 +297,10 @@ public  class PanelRegistro extends PanelAuth{
     }
 });
 
-         
+
          panelPassword.add(campoPassword, BorderLayout.CENTER);
          panelPassword.add(labelOjo1, BorderLayout.EAST);
-         
+
          gbcTarjeta.gridx=0;
          gbcTarjeta.gridy=5;
          gbcTarjeta.fill = GridBagConstraints.HORIZONTAL;
@@ -308,7 +308,7 @@ public  class PanelRegistro extends PanelAuth{
          gbcTarjeta.insets = new Insets(5, 10, 8, 10);
 
          tarjeta.add(panelPassword, gbcTarjeta);
-         
+
          gbcTarjeta.gridx=0;
          gbcTarjeta.gridy=6;
          gbcTarjeta.fill = GridBagConstraints.HORIZONTAL;
@@ -316,11 +316,11 @@ public  class PanelRegistro extends PanelAuth{
          gbcTarjeta.insets = new Insets(5, 10, 8, 10);
 
          tarjeta.add(agregarCampoConfirmarPass(), gbcTarjeta);
-         
+
         labelError=new JLabel();
         labelError.setHorizontalAlignment(SwingConstants.CENTER);
         labelError.setFont(new Font("Arial", Font.PLAIN, 12)); 
-         
+
         gbcTarjeta.gridx = 0;
         gbcTarjeta.gridy = 7;
         gbcTarjeta.fill = GridBagConstraints.HORIZONTAL;
@@ -329,9 +329,9 @@ public  class PanelRegistro extends PanelAuth{
         gbcTarjeta.insets = new Insets(0, 10, 5, 10);
 
         tarjeta.add(labelError, gbcTarjeta);
-        
-         
-         
+
+
+
          btnRegistrar=new JButton("Registrar");
          btnRegistrar.setBackground(new Color(0,149,246));
          btnRegistrar.setForeground(Color.WHITE);
@@ -339,7 +339,7 @@ public  class PanelRegistro extends PanelAuth{
         btnRegistrar.setBorderPainted(false);
         btnRegistrar.setPreferredSize(new Dimension(250, 35));
         btnRegistrar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        
+
         gbcTarjeta.gridx = 0;
         gbcTarjeta.gridy = 8;
         gbcTarjeta.fill = GridBagConstraints.NONE;
@@ -349,47 +349,47 @@ public  class PanelRegistro extends PanelAuth{
 
         tarjeta.add(btnRegistrar, gbcTarjeta);
         btnRegistrar();
-        
+
         labelIniciarSesion=new JLabel("Ya tienes cuenta?. Inicia Sesión");
         labelIniciarSesion.setHorizontalAlignment(SwingConstants.CENTER);
         labelIniciarSesion.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         labelIniciarSesion.setForeground(new Color(0,149,246));
         labelIniciarSesion.setFont(new Font("Arial",Font.PLAIN,12));
         labelIniciars();
-        
+
         gbcTarjeta.gridy=9;
         gbcTarjeta.fill = GridBagConstraints.NONE;
         gbcTarjeta.weightx = 1.0;
         gbcTarjeta.anchor = GridBagConstraints.CENTER;
         gbcTarjeta.insets = new Insets(8, 10, 10, 10);
-        
+
          tarjeta.add(labelIniciarSesion,gbcTarjeta);
     }
-    
+
     private JPanel agregarCampoConfirmarPass(){
         JPanel panelPassword=new JPanel(new BorderLayout());
          panelPassword.setPreferredSize(new Dimension(250,35));
          panelPassword.setBackground(Color.WHITE);
          panelPassword.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
-         
+
          campoConfirmarPassword = new JPasswordField(20);
          campoConfirmarPassword.setBorder(BorderFactory.createEmptyBorder(5, 8, 5, 8));
          char ecoOriginal = campoConfirmarPassword.getEchoChar();
          campoConfirmarPassword.setText("Confirmar contraseña");
          campoConfirmarPassword.setForeground(Color.GRAY);
          campoConfirmarPassword.setEchoChar((char) 0);
-         
+
          JLabel labelOjo1=new JLabel();
          JLabel labelOjo2=new JLabel();
          try {
         ImageIcon ojo1Original = new ImageIcon(getClass().getResource("/Insta/Imagenes/ojo1.png"));
         Image ojo1 = ojo1Original.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
         labelOjo1.setIcon(new ImageIcon(ojo1));
-        
+
         ImageIcon ojo2Orriginal=new ImageIcon(getClass().getResource("/Insta/Imagenes/ojo2.png"));
         Image ojo2=ojo2Orriginal.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
         labelOjo2.setIcon(new ImageIcon(ojo2));
-       
+
     } catch (Exception e) {
         System.err.println("No se pudo cargar la imagen: " + e.getMessage());
     }
@@ -407,9 +407,9 @@ public  class PanelRegistro extends PanelAuth{
         labelOjo2.setBorder(
             BorderFactory.createEmptyBorder(0, 5, 0, 8)
         ); 
-         
-         
-         
+
+
+
          campoConfirmarPassword.addFocusListener(new java.awt.event.FocusAdapter() {
         @Override
         public void focusGained(java.awt.event.FocusEvent e) {
@@ -436,10 +436,10 @@ public  class PanelRegistro extends PanelAuth{
     @Override
     public void mouseClicked(java.awt.event.MouseEvent e) {
 
-        
+
         campoConfirmarPassword.setEchoChar((char) 0);
 
-        
+
         panelPassword.remove(labelOjo1);
         panelPassword.add(labelOjo2, BorderLayout.EAST);
 
@@ -455,10 +455,10 @@ public  class PanelRegistro extends PanelAuth{
     @Override
     public void mouseClicked(java.awt.event.MouseEvent e) {
 
-        
+
         campoConfirmarPassword.setEchoChar(ecoOriginal);
 
-        
+
         panelPassword.remove(labelOjo2);
         panelPassword.add(labelOjo1, BorderLayout.EAST);
 
@@ -467,39 +467,39 @@ public  class PanelRegistro extends PanelAuth{
     }
 });
 
-         
+
          panelPassword.add(campoConfirmarPassword, BorderLayout.CENTER);
          panelPassword.add(labelOjo1, BorderLayout.EAST);
-         
+
          return panelPassword;
     }
-    
-    
+
+
     private void labelIniciars(){
         labelIniciarSesion.addMouseListener(new MouseAdapter(){
             public void mouseClicked(MouseEvent e){
                 limpiarCampos();
                 navegar.accept("login");
-                
+
             }
         });
-        
+
     }
-    
+
     private void btnRegistrar(){
         btnRegistrar.addActionListener((ActionEvent e) -> {
             String password1=String.valueOf(campoPassword.getPassword());
             String password2=String.valueOf(campoConfirmarPassword.getPassword());
-            
+
             if(confirmarPassword(password1,password2)){
                 if(validarPassword(password1)){
                     mostrarMsj("Contraseña válida",Color.GREEN);
                     intentarRegistro();
                 }
-                
+
             }
         });
-        
+
     }
     private boolean confirmarPassword(String Password1, String Password2){
         if(Password1.equals("Contraseña")||Password1.isEmpty()){
@@ -514,26 +514,26 @@ public  class PanelRegistro extends PanelAuth{
         }else{
             mostrarMsj("",Color.WHITE);
         }
-        
+
         return true;
     }
-    
+
     private boolean validarPassword(String Password){
         if(Password.length()<8){
             mostrarMsj("La contraseña debe tener 8 digitos",Color.RED);
             return false;
         }
         String simbolosPermitidos="!@#$%&*()_";
-       
+
         boolean tieneNumero=false;
         boolean tieneMayuscula=false;
         boolean tieneSimbolo=false;
-        
+
         for(char c:Password.toCharArray()){
             if(Character.isUpperCase(c)){
                 tieneMayuscula=true;
             }
-            
+
             if(Character.isDigit(c)){
                 tieneNumero=true;
             }
@@ -541,7 +541,7 @@ public  class PanelRegistro extends PanelAuth{
                 tieneSimbolo=true;
             }
         }
-        
+
         if(!tieneMayuscula){
             mostrarMsj("La contraseña debe incluir una letra mayúscula",Color.RED);
             return false;
@@ -550,15 +550,15 @@ public  class PanelRegistro extends PanelAuth{
             mostrarMsj("La contraseña debe incluir un digito numerico",Color.RED);
             return false;
         }
-         
+
         if(!tieneSimbolo){
             mostrarMsj("<html>La contraseña debe tener<br>"
                     + "al menos un carácter especial</html>", Color.RED);
             return false;
         }
-        
+
         return tieneNumero&&tieneMayuscula&&tieneSimbolo;
-        
+
     }
     private void seleccionarFoto(){
         JFileChooser chooser = new JFileChooser();
@@ -570,7 +570,7 @@ public  class PanelRegistro extends PanelAuth{
         fotoPerfil.setIcon(new ImageIcon(escalada));
     }
     }
-    
+
     private void configurarEventos(){
        MouseAdapter clickFoto = new MouseAdapter() {
         @Override
@@ -580,9 +580,9 @@ public  class PanelRegistro extends PanelAuth{
     };
     fotoPerfil.addMouseListener(clickFoto);
     labelAgregarFoto.addMouseListener(clickFoto);
-        
+
     }
-    
+
     private boolean validarCamposObligatorios(String nombre,Genero genero, String username){
         if(nombre.isEmpty()||genero.equals("Selecciona_tu_genero")||username.isEmpty()){
             mostrarMsj("Completa todos los campos obligatorios",Color.RED);
@@ -590,9 +590,9 @@ public  class PanelRegistro extends PanelAuth{
         }
         return true;
     }
-    
- 
-    
+
+
+
     private void intentarRegistro(){
         String nombre=campoNombre.getText().trim();
         Genero genero=(Genero) campoGenero.getSelectedItem();
@@ -602,7 +602,7 @@ public  class PanelRegistro extends PanelAuth{
         String password = new String(passChars);
         String confirmacion = new String(confirmChars);
         int edad = (Integer) campoEdad.getValue();
-        
+
         if(!validarCamposObligatorios(nombre, genero, username)){
             limpiarCampos(passChars, confirmChars);
             return;
@@ -617,7 +617,7 @@ public  class PanelRegistro extends PanelAuth{
             return;
         }
         String nombreArchivoFoto = (archivoFoto != null) ? archivoFoto.getName() : null;
-    
+
         try{
             UsuarioInsta nuevo=ServicioArchivoInsta.registrarUsuario(nombre,
                     genero,edad, username, password, nombreArchivoFoto);
@@ -626,8 +626,8 @@ public  class PanelRegistro extends PanelAuth{
             mostrarMsj(" ",Color.RED);
             limpiarCampos();
             navegar.accept("panelApp");
-            
-            
+
+
         }catch(UsernameDuplicadoException ex){
             mostrarMsj("Nombre de usuario en uso", Color.RED);
         }catch(ArchivoCorruptoException | IOException ex){
@@ -635,8 +635,8 @@ public  class PanelRegistro extends PanelAuth{
         }finally{
             limpiarCampos(passChars, confirmChars);
         }
-    
-    
+
+
     }
     private void guardarFotoPerfil(String username)throws IOException{
         if(archivoFoto==null){
@@ -656,24 +656,24 @@ public  class PanelRegistro extends PanelAuth{
     private String obtenerExtension(String nombreArchivo){
         int posicion=nombreArchivo.lastIndexOf('.');
         String extension=nombreArchivo.substring(posicion);
-        
+
         if(posicion==-1){
             return "";
         }
         return extension;
     }
-    
+
     private void limpiarCampos(char[] a, char[] b){
         java.util.Arrays.fill(a, ' ');
         java.util.Arrays.fill(b, ' ');
     }
-    
-    
+
+
     private void mostrarMsj(String texto, Color color){
         labelError.setText(texto);
         labelError.setForeground(color);
     }
-    
+
     @Override
     protected void limpiarCampos(){
         campoNombre.setText("Nombre completo");
@@ -688,5 +688,5 @@ public  class PanelRegistro extends PanelAuth{
         fotoPerfil.setIcon(new ImageIcon(iconoUsuario)); 
         labelError.setText(" ");
     }
-    
+
 }

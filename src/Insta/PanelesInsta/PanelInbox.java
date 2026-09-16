@@ -755,7 +755,7 @@ public class PanelInbox extends JPanel{
   //servidor
     private void guardarMensajeEnServidor(Mensaje msg) {
         try {
-            PeticionRed peticion = new PeticionRed("GUARDAR_MENSAJE", msg);
+            PeticionRed peticion = new PeticionRed("ENVIAR_MENSAJE", msg);
             ClienteInsta.getInstancia().enviarPeticion(peticion);
         } catch (Exception e) {
             System.err.println("Error al guardar mensaje en el servidor: " + e.getMessage());
@@ -765,7 +765,7 @@ public class PanelInbox extends JPanel{
     private ListaEnlazada<Mensaje> obtenerChatDesdeServidor(String u1, String u2) {
         try {
             String[] params = new String[]{u1, u2};
-            PeticionRed peticion = new PeticionRed("OBTENER_CHAT_ENTRE", (Object[]) params);
+            PeticionRed peticion = new PeticionRed("OBTENER_MENSAJES", (Object[]) params);
             RespuestaRed respuesta = ClienteInsta.getInstancia().enviarPeticion(peticion);
 
             if (respuesta != null && respuesta.isExito() && respuesta.getContenido() instanceof ListaEnlazada) {
@@ -790,4 +790,9 @@ public class PanelInbox extends JPanel{
         }
         return new ListaEnlazada<>();
     }
+    public void detenerPolling() {
+    if (timerActualizacion != null) {
+        timerActualizacion.stop();
+    }
+}
 }

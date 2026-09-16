@@ -278,16 +278,26 @@ public class PanelEditarPerfil extends JPanel{
         if (rutaNuevaFoto != null) {
             try {
                 File origen = new File(rutaNuevaFoto);
-                String nombreArchivo = nuevoUser + "_profile.png";
-                File destino = new File(Rutas.rutaFotoPerfil(nuevoUser, nombreArchivo), nombreArchivo);
+                String nombreArchivo = usuarioActual.getUser() + "_profile_" + System.currentTimeMillis() + ".png";
+                File destino = new File(Rutas.rutaImagenes(nuevoUser), nombreArchivo);
 
                 if (!destino.getParentFile().exists()) {
                     destino.getParentFile().mkdirs();
                 }
+                
+                if (destino.exists()) {
+                if (destino.isDirectory()) {
+                    for (File f : destino.listFiles()) {
+                        f.delete();
+                    }
+                }
+                destino.delete();
+            }
 
                 Files.copy(origen.toPath(), destino.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 usuarioActual.setArchivoFoto(nombreArchivo);
             } catch (Exception e) {
+                 e.printStackTrace();
                 JOptionPane.showMessageDialog(this, "Error al guardar la foto de perfil: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }

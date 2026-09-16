@@ -214,97 +214,47 @@ public class PanelLogin extends PanelAuth{
     
     private void intentarLogin() throws Exception {
         String username = campoUsername.getText();
-        char[] passwordChars = campoPassword.getPassword();
-        String password = new String(passwordChars);
+    char[] passwordChars = campoPassword.getPassword();
+    String password = new String(passwordChars);
 
-        try {
-
-        PeticionRed peticion =
-                new PeticionRed(
-                    "LOGIN",
-                    username,
-                    password
-                );
-
-        RespuestaRed respuesta =
-                cliente.enviarPeticion(
-                    peticion
-                );
+    try {
+        PeticionRed peticion = new PeticionRed("LOGIN", username, password);
+        RespuestaRed respuesta = cliente.enviarPeticion(peticion);
 
         if (respuesta.isExito()) {
+            UsuarioInsta usuario = (UsuarioInsta) respuesta.getContenido();
+            SesionActual.getInstancia().iniciarSesion(usuario);
+            SesionActual.getInstancia().setCliente(cliente);
 
-            UsuarioInsta usuario =
-                    (UsuarioInsta)
-                    respuesta.getContenido();
-
-            SesionActual
-                .getInstancia()
-                .iniciarSesion(usuario);
-            SesionActual
-                .getInstancia()
-                .setCliente(cliente);
-
-            System.out.println(
-                "Login exitoso: "
-                + usuario.getUser()
-            );
+            System.out.println("Login exitoso: " + usuario.getUser());
 
             limpiarCampos();
-            
 
             if (getParent() instanceof NavegarInsta) {
                 ((NavegarInsta) getParent()).alIniciarSesion();
             } else {
-                navegar.accept("login_exitoso"); 
+                navegar.accept("login_exitoso");
             }
 
         } else {
-
-            Object error =
-                    respuesta.getContenido();
+            Object error = respuesta.getContenido();
 
             if (error instanceof UsuarioInexistenteException) {
-
-                labelError.setText(
-                    "El usuario no existe."
-                );
-
-            } else if (
-                error instanceof PasswordIncorrectoException) {
-
-                labelError.setText(
-                    "Contraseña incorrecta."
-                );
-
-            } else if (
-                error instanceof CuentaDesactivadaException) {
-
-                labelError.setText(
-                    "Esta cuenta está desactivada."
-                );
-
+                labelError.setText("El usuario no existe.");
+            } else if (error instanceof PasswordIncorrectoException) {
+                labelError.setText("Contraseña incorrecta.");
+            } else if (error instanceof CuentaDesactivadaException) {
+                labelError.setText("Esta cuenta está desactivada.");
             } else {
-
-                labelError.setText(
-                    respuesta.getMensajeError()
-                );
+                labelError.setText(respuesta.getMensajeError());
             }
         }
 
     } catch (Exception e) {
-
         e.printStackTrace();
-
-        labelError.setText(
-            "Error de conexión con el servidor."
-        );
-
+        labelError.setText("Error de conexión con el servidor.");
     } finally {
-
-        java.util.Arrays.fill(
-            passwordChars,
-            ' '
-        );
+        java.util.Arrays.fill(passwordChars, ' ');
     }
 }
     @Override

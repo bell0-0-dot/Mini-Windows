@@ -6,6 +6,7 @@ package Insta.PanelesInsta;
 
 import ConfigInsta.Rutas;
 import ConfigInsta.ServicioArchivoInsta;
+import ConfigInsta.UtilImagen;
 import Excepciones.ArchivoCorruptoException;
 import Insta.UsuarioInsta;
 import java.awt.Dimension;
@@ -13,6 +14,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.RenderingHints;
+import java.awt.Toolkit;
 import java.awt.geom.Ellipse2D;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
@@ -52,12 +54,16 @@ public class AvatarCircular extends JComponent{
         UsuarioInsta usuario = ServicioArchivoInsta.buscarUsuario(username);
 
         Image imagen;
-        if (usuario.getArchivoFoto() == null) {
+        if (usuario == null || usuario.getArchivoFoto() == null) {
             imagen = new ImageIcon(AvatarCircular.class.getResource("/Insta/Imagenes/UserIcon.png")).getImage();
         } else {
+            String rutaCompleta = Rutas.rutaFotoPerfil(usuario.getUser(), usuario.getArchivoFoto());
+            Toolkit.getDefaultToolkit().getImage(rutaCompleta).flush(); 
             imagen = new ImageIcon(Rutas.rutaFotoPerfil(usuario.getUser(), usuario.getArchivoFoto())).getImage();
         }
 
-        return new AvatarCircular(imagen, diametro);
+        Image escalada = UtilImagen.escalarAlta(imagen, diametro, diametro);
+        return new AvatarCircular(escalada, diametro);
+
     }
 }
